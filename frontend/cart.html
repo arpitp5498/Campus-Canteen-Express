@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Cart - Campus Canteen Express</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .cart-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .cart-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+        @media (min-width: 900px) {
+            .cart-layout {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        .cart-items-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .cart-item-row {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.15s;
+        }
+        .cart-item-row:last-child {
+            border-bottom: none;
+        }
+        .cart-item-row:hover {
+            background-color: var(--background);
+        }
+
+        .cart-item-thumb {
+            width: 84px;
+            height: 84px;
+            border-radius: var(--radius-sm);
+            object-fit: cover;
+            background: #F1F5F9;
+            flex-shrink: 0;
+            border: 1px solid var(--border);
+        }
+
+        .cart-item-details {
+            flex: 1;
+            min-width: 0;
+        }
+        .cart-item-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin: 0 0 0.25rem 0;
+            color: var(--text);
+        }
+        .cart-item-variant {
+            display: inline-block;
+            background: var(--primary-bg);
+            color: var(--primary-dark);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            margin-bottom: 0.35rem;
+        }
+        .cart-item-unit-price {
+            font-size: 0.9rem;
+            color: var(--muted);
+            margin: 0;
+        }
+
+        .cart-item-controls {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .cart-qty-stepper {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--white);
+            overflow: hidden;
+        }
+        .cart-qty-btn {
+            border: none;
+            background: none;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.15s;
+        }
+        .cart-qty-btn:hover {
+            background-color: var(--border-light);
+            color: var(--primary);
+        }
+        .cart-qty-num {
+            width: 32px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .cart-item-subtotal {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text);
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .cart-item-remove-btn {
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: var(--muted);
+            font-size: 1.25rem;
+            padding: 0.5rem;
+            border-radius: var(--radius-sm);
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cart-item-remove-btn:hover {
+            color: #EF4444;
+            background: #FEF2F2;
+        }
+
+        /* Order Summary Card */
+        .order-summary-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 2rem;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.85rem;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+        .summary-row.total-row {
+            border-top: 1px dashed var(--border);
+            padding-top: 1rem;
+            margin-top: 1rem;
+            margin-bottom: 1.25rem;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .fee-badge-note {
+            background: var(--primary-bg);
+            border: 1px solid rgba(22, 163, 74, 0.2);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.825rem;
+            color: var(--primary-dark);
+            line-height: 1.45;
+        }
+
+        .empty-cart-container {
+            text-align: center;
+            padding: 4.5rem 1.5rem;
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            border: 1px dashed var(--border);
+            max-width: 600px;
+            margin: 2rem auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+    
+    <main class="container" style="max-width: 1100px; margin: 0 auto; padding: 2rem 1rem;">
+        <div class="cart-page-header">
+            <div>
+                <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.25rem;">Your Pre-Order Cart</h1>
+                <p class="text-muted" style="color: var(--muted); font-size: 0.95rem;">Review your items before picking your 12:00 PM – 1:00 PM lunch pickup window.</p>
+            </div>
+            <div id="cart-actions-header">
+                <button type="button" class="btn btn-outline btn-sm" id="clear-cart-btn" style="color: #EF4444; border-color: #FCA5A5;">
+                    🗑️ Clear Cart
+                </button>
+            </div>
+        </div>
+        
+        <div id="cart-content" class="cart-layout">
+            <!-- Items Container -->
+            <div>
+                <div class="cart-items-card" id="cart-items-container">
+                    <!-- Cart items will be rendered here via JS -->
+                </div>
+                <div style="margin-top: 1rem;">
+                    <a href="menu.html" class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                        &larr; Add More Items
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Summary Sidebar -->
+            <div>
+                <div class="order-summary-card">
+                    <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.25rem;">Order Summary</h3>
+                    
+                    <div class="summary-row">
+                        <span>Items Subtotal</span>
+                        <span id="cart-subtotal" style="font-weight: 600;">₹0</span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span>Estimated Express Fee</span>
+                        <span id="cart-estimated-fee" style="font-weight: 600;">₹1 - ₹3</span>
+                    </div>
+
+                    <div class="fee-badge-note">
+                        ⚡ <strong>Express Pickup Fees:</strong><br>
+                        &bull; ₹3 for Today's Lunch Orders<br>
+                        &bull; ₹1 for Tomorrow's Lunch Orders (Save ₹2!)
+                    </div>
+                    
+                    <div class="summary-row total-row">
+                        <span>Estimated Total</span>
+                        <span id="cart-total" style="color: var(--primary-dark);">₹0</span>
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary" id="proceed-checkout-btn" style="width: 100%; padding: 0.9rem; font-size: 1.05rem; font-weight: 700;">
+                        Proceed to Slot Selection &rarr;
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Empty State -->
+        <div id="empty-cart-state" class="empty-cart-container" style="display: none;">
+            <div style="font-size: 4rem; margin-bottom: 1.25rem;">🛒</div>
+            <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem;">Your cart is empty</h2>
+            <p style="color: var(--muted); margin-bottom: 1.75rem;">Explore our freshly made sandwiches, rolls, meals, snacks, and chilled drinks.</p>
+            <a href="menu.html" class="btn btn-primary" style="padding: 0.75rem 2rem; font-weight: 600;">
+                Browse Express Menu
+            </a>
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/cart.js"></script>
+</body>
+</html>

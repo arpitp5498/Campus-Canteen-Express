@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Express Checkout - Campus Canteen Express</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .checkout-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+        @media (min-width: 960px) {
+            .checkout-layout {
+                grid-template-columns: 1.8fr 1.2fr;
+            }
+        }
+
+        .checkout-step-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .step-heading {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .step-badge {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #FFFFFF;
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .step-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin: 0;
+            color: var(--text);
+        }
+        .step-subtext {
+            color: var(--muted);
+            font-size: 0.875rem;
+            margin-bottom: 1.25rem;
+        }
+
+        /* Order Day Selector */
+        .day-options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .day-card {
+            padding: 1.25rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            text-align: center;
+            background: var(--white);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .day-card:hover {
+            border-color: var(--primary-light);
+            background: var(--primary-bg);
+        }
+        .day-card.selected {
+            border-color: var(--primary);
+            background: #F0FDF4;
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.15);
+        }
+        .day-card-title {
+            font-weight: 800;
+            font-size: 1.05rem;
+            margin-bottom: 0.35rem;
+            color: var(--text);
+        }
+        .day-card-fee {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+        .day-card-badge {
+            position: absolute;
+            top: -10px;
+            right: 12px;
+            background: #2563EB;
+            color: #FFFFFF;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            letter-spacing: 0.03em;
+        }
+
+        /* Slot Selector Grid */
+        .slot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            gap: 0.85rem;
+        }
+        .slot-card {
+            padding: 1rem 0.85rem;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            text-align: center;
+            background: var(--white);
+            transition: all 0.15s ease-in-out;
+            user-select: none;
+        }
+        .slot-card:hover:not(.disabled) {
+            border-color: var(--primary-light);
+            background: var(--primary-bg);
+            transform: translateY(-2px);
+        }
+        .slot-card.slot-selected {
+            border-color: var(--primary);
+            background: #F0FDF4;
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+        .slot-card.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #F8FAFC;
+            border-color: #E2E8F0;
+        }
+
+        .slot-time {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text);
+            margin-bottom: 0.4rem;
+        }
+        .slot-spots {
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .slot-spots.spots-good { color: #16A34A; }
+        .slot-spots.spots-low { color: #D97706; }
+        .slot-spots.spots-full { color: #EF4444; }
+
+        .slot-progress-bar {
+            height: 4px;
+            border-radius: 999px;
+            background: #E2E8F0;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .slot-progress-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.3s ease;
+        }
+
+        /* Payment Methods */
+        .payment-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .payment-card {
+            padding: 1rem;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--white);
+            transition: all 0.15s;
+        }
+        .payment-card:hover {
+            border-color: var(--primary-light);
+        }
+        .payment-card.selected {
+            border-color: var(--primary);
+            background: #F0FDF4;
+            font-weight: 600;
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+
+        /* Order Review Sidebar */
+        .order-review-card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 2rem;
+        }
+
+        .review-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+        .review-item-title {
+            font-weight: 600;
+        }
+        .review-item-variant {
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        .summary-separator {
+            border-top: 1px solid var(--border);
+            margin: 1.25rem 0;
+        }
+
+        .cost-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.65rem;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+        .cost-row.total-cost {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-top: 0.85rem;
+            padding-top: 0.85rem;
+            border-top: 1px dashed var(--border);
+        }
+
+        .express-guarantee {
+            background: var(--primary-bg);
+            border: 1px solid rgba(22, 163, 74, 0.25);
+            border-radius: var(--radius-sm);
+            padding: 0.85rem;
+            margin: 1.25rem 0;
+            font-size: 0.825rem;
+            color: var(--primary-dark);
+            line-height: 1.45;
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+    
+    <main class="container" style="max-width: 1100px; margin: 0 auto; padding: 2rem 1rem;">
+        <header style="margin-bottom: 1.75rem;">
+            <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.25rem;">Express Checkout</h1>
+            <p class="text-muted" style="color: var(--muted); font-size: 0.95rem;">Select your pickup window, review your items, and complete your order.</p>
+        </header>
+        
+        <div class="checkout-layout">
+            <!-- Left Side: Order Options -->
+            <div class="checkout-main">
+                
+                <!-- Step 1: Pickup Date Selection -->
+                <section class="checkout-step-card">
+                    <div class="step-heading">
+                        <span class="step-badge">1</span>
+                        <h2 class="step-title">Select Pickup Day</h2>
+                    </div>
+                    <p class="step-subtext">Choose when you plan to collect your lunch from the Express Counter.</p>
+                    
+                    <div class="day-options-grid">
+                        <div class="day-card selected" id="opt-today" data-type="TODAY" role="button" tabindex="0">
+                            <div class="day-card-title">🍽️ Today's Lunch</div>
+                            <div class="day-card-fee">⚡ Express Fee: ₹3</div>
+                        </div>
+                        <div class="day-card" id="opt-tomorrow" data-type="TOMORROW" role="button" tabindex="0">
+                            <span class="day-card-badge">Save ₹2</span>
+                            <div class="day-card-title">📅 Tomorrow's Lunch</div>
+                            <div class="day-card-fee">⚡ Express Fee: ₹1</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Step 2: Slot Selection (12:00 PM - 1:00 PM) -->
+                <section class="checkout-step-card">
+                    <div class="step-heading">
+                        <span class="step-badge">2</span>
+                        <h2 class="step-title">Choose 10-Minute Express Slot</h2>
+                    </div>
+                    <p class="step-subtext" id="slot-instruction-text">
+                        Pickup slots available between 12:00 PM and 1:00 PM for today.
+                    </p>
+                    
+                    <div id="slots-container" class="slot-grid">
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: var(--muted);">
+                            Loading live slot capacities...
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Step 3: Payment Method -->
+                <section class="checkout-step-card">
+                    <div class="step-heading">
+                        <span class="step-badge">3</span>
+                        <h2 class="step-title">Payment Method</h2>
+                    </div>
+                    <p class="step-subtext">Instant automated campus verification is enabled.</p>
+                    
+                    <div class="payment-grid">
+                        <div class="payment-card selected" data-method="upi" role="button" tabindex="0">
+                            <span style="font-size: 1.5rem;">📱</span>
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.95rem;">UPI / QR</div>
+                                <div style="font-size: 0.78rem; color: var(--muted);">GPay, PhonePe, Paytm</div>
+                            </div>
+                        </div>
+                        <div class="payment-card" data-method="card" role="button" tabindex="0">
+                            <span style="font-size: 1.5rem;">💳</span>
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.95rem;">Campus Card / Netbanking</div>
+                                <div style="font-size: 0.78rem; color: var(--muted);">Direct Student ID Pay</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            
+            <!-- Right Side: Order Review -->
+            <div class="checkout-sidebar">
+                <div class="order-review-card">
+                    <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1rem; color: var(--text);">Order Review</h3>
+                    
+                    <div id="review-items" style="max-height: 280px; overflow-y: auto; padding-right: 0.5rem; margin-bottom: 1rem;">
+                        <!-- Rendered via JS -->
+                    </div>
+                    
+                    <div class="summary-separator"></div>
+                    
+                    <div class="cost-row">
+                        <span>Items Subtotal</span>
+                        <span id="checkout-subtotal" style="font-weight: 600;">₹0</span>
+                    </div>
+                    
+                    <div class="cost-row">
+                        <span id="fee-label">Express Fee (Today)</span>
+                        <span id="checkout-express-fee" style="font-weight: 600;">₹3</span>
+                    </div>
+                    
+                    <div class="cost-row total-cost">
+                        <span>Total Payable</span>
+                        <span id="checkout-total" style="color: var(--primary-dark);">₹0</span>
+                    </div>
+
+                    <div class="express-guarantee">
+                        🔒 <strong>Zero Wait Guarantee:</strong><br>
+                        Your human-readable 4-character pickup token will be generated on your order receipt. Present it when your status shows <strong>READY</strong>.
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary" id="place-order-btn" style="width: 100%; padding: 0.95rem; font-size: 1.05rem; font-weight: 800;">
+                        💳 Pay &amp; Confirm Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-container"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/checkout.js"></script>
+</body>
+</html>

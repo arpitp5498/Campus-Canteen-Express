@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu - Campus Canteen Express</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .menu-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .menu-controls {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        @media (min-width: 768px) {
+            .menu-controls {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        .search-wrapper {
+            position: relative;
+        }
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            pointer-events: none;
+            font-size: 1rem;
+        }
+        .search-bar {
+            width: 100%;
+            padding: 0.8rem 1rem 0.8rem 2.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: inherit;
+            font-size: 0.95rem;
+            background: var(--white);
+            color: var(--text);
+            transition: var(--transition);
+        }
+        .search-bar:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
+        }
+
+        .sort-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .sort-select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--white);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .sort-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
+        }
+
+        .category-filters {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding: 0.25rem 0.25rem 0.75rem 0.25rem;
+            margin-bottom: 1.75rem;
+            scrollbar-width: thin;
+        }
+        .category-filters::-webkit-scrollbar {
+            height: 4px;
+        }
+        .category-filters::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+        
+        .category-btn {
+            padding: 0.55rem 1.15rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: var(--white);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s ease-in-out;
+            user-select: none;
+        }
+        .category-btn:hover {
+            border-color: var(--primary-light);
+            color: var(--primary-dark);
+            background: var(--primary-bg);
+        }
+        .category-btn.active {
+            background: var(--primary);
+            color: var(--white);
+            border-color: var(--primary);
+            box-shadow: 0 2px 6px rgba(22, 163, 74, 0.3);
+        }
+
+        .results-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            color: var(--muted);
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        @media (min-width: 640px) {
+            .grid-3 { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (min-width: 1024px) {
+            .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        /* Food Card */
+        .food-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+        }
+        .food-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+        .food-card.out-of-stock {
+            opacity: 0.75;
+        }
+        
+        .food-card-media {
+            position: relative;
+            width: 100%;
+            height: 190px;
+            overflow: hidden;
+            background: #F1F5F9;
+            cursor: pointer;
+        }
+        .food-card-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .food-card:hover .food-card-media img {
+            transform: scale(1.04);
+        }
+
+        .food-card-badge {
+            position: absolute;
+            top: 0.75rem;
+            left: 0.75rem;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(4px);
+            color: #FFFFFF;
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .sold-out-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .food-card-content {
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .food-card-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .food-name {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        .food-name:hover {
+            color: var(--primary);
+        }
+
+        .food-desc {
+            color: var(--muted);
+            font-size: 0.85rem;
+            line-height: 1.45;
+            margin-bottom: 0.85rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            flex-grow: 1;
+        }
+
+        .food-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-bottom: 0.85rem;
+            padding-bottom: 0.65rem;
+            border-bottom: 1px dashed var(--border);
+        }
+        .prep-time {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-weight: 500;
+        }
+        .stock-status {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-weight: 500;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot.available { background: var(--primary); }
+        .dot.unavailable { background: #EF4444; }
+
+        .food-action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: auto;
+        }
+
+        .food-price {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .card-actions-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-quick-view {
+            padding: 0.55rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--white);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .btn-quick-view:hover {
+            border-color: var(--text-secondary);
+            background: var(--background);
+        }
+
+        .btn-add {
+            padding: 0.55rem 1.1rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: var(--primary);
+            color: var(--white);
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .btn-add:hover:not(:disabled) {
+            background: var(--primary-dark);
+            box-shadow: 0 2px 6px rgba(22, 163, 74, 0.3);
+        }
+        .btn-add:disabled {
+            background: var(--border);
+            color: var(--muted);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Detail Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 560px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            position: relative;
+            transform: translateY(12px) scale(0.98);
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .modal-overlay.active .modal-card {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.6);
+            color: #FFFFFF;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: background 0.15s;
+        }
+        .modal-close-btn:hover {
+            background: rgba(15, 23, 42, 0.85);
+        }
+
+        .modal-media {
+            width: 100%;
+            height: 240px;
+            position: relative;
+            background: #F1F5F9;
+        }
+        .modal-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-category-badge {
+            display: inline-block;
+            background: var(--primary-bg);
+            color: var(--primary-dark);
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .modal-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            font-size: 0.875rem;
+            color: var(--muted);
+            margin-bottom: 1rem;
+        }
+
+        .modal-description {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-bottom: 1.25rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .variant-selector-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .variant-pill-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+        }
+
+        .modal-variant-btn {
+            padding: 0.5rem 0.9rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--white);
+            color: var(--text);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .modal-variant-btn.active {
+            border-color: var(--primary);
+            background: var(--primary-bg);
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+
+        .qty-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding: 0.75rem 1rem;
+            background: var(--background);
+            border-radius: var(--radius-sm);
+        }
+
+        .qty-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .qty-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--white);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .qty-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .qty-display {
+            font-size: 1.1rem;
+            font-weight: 700;
+            min-width: 24px;
+            text-align: center;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .modal-total-price {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        /* Floating Cart Pill */
+        .floating-cart {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--primary);
+            color: var(--white);
+            padding: 0.85rem 1.4rem;
+            border-radius: 999px;
+            box-shadow: 0 8px 24px rgba(22, 163, 74, 0.35);
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            z-index: 100;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .floating-cart:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(22, 163, 74, 0.45);
+        }
+        .floating-cart.hidden { display: none !important; }
+
+        .hidden { display: none !important; }
+
+        /* Skeleton Loading */
+        .skeleton-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            height: 320px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+    
+    <main class="container" style="max-width: 1200px; margin: 0 auto; padding: 2rem 1rem;">
+        <header class="menu-header-bar">
+            <div>
+                <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.25rem;">Our Express Menu</h1>
+                <p class="text-muted" style="color: var(--muted); font-size: 0.95rem;">Pre-order freshly prepared meals & snacks for instant counter pickup.</p>
+            </div>
+        </header>
+        
+        <!-- Controls: Search & Sort -->
+        <div class="menu-controls">
+            <div class="search-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="search-input" class="search-bar" placeholder="Search by food name, description, or keyword..." aria-label="Search food">
+            </div>
+            <div class="sort-wrapper">
+                <select id="sort-select" class="sort-select" aria-label="Sort menu items">
+                    <option value="default">✨ Recommended</option>
+                    <option value="price_asc">💰 Price: Low to High</option>
+                    <option value="price_desc">💎 Price: High to Low</option>
+                    <option value="prep_time">⏱️ Fastest Prep Time</option>
+                    <option value="name_asc">🔤 Alphabetical (A-Z)</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Category Filter Pills -->
+        <div class="category-filters" id="category-filters" role="tablist" aria-label="Food Categories">
+            <!-- Rendered via JS -->
+        </div>
+
+        <!-- Results Counter & Status -->
+        <div class="results-meta">
+            <span id="items-count-label">Loading items...</span>
+            <span id="active-filter-label" style="font-weight: 500;"></span>
+        </div>
+        
+        <!-- Skeleton Loading Grid -->
+        <div id="loading-state" class="grid-3">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+        </div>
+        
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden" style="text-align: center; padding: 4rem 1rem; background: var(--white); border-radius: var(--radius-lg); border: 1px dashed var(--border);">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">No matching food found</h3>
+            <p style="color: var(--muted); margin-bottom: 1.5rem; max-width: 400px; margin-inline: auto;">We couldn't find anything matching your search. Try changing keywords or resetting categories.</p>
+            <button class="btn btn-outline" id="reset-filters-btn">Reset All Filters</button>
+        </div>
+        
+        <!-- Food Items Grid -->
+        <div class="grid-3 hidden" id="menu-grid">
+            <!-- Rendered via JS -->
+        </div>
+    </main>
+    
+    <!-- Item Detail Modal -->
+    <div id="food-detail-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-food-name">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" id="modal-close-btn" aria-label="Close dialog">&times;</button>
+            <div class="modal-media">
+                <img id="modal-food-img" src="/images/food/placeholder.svg" alt="Food item" onerror="handleImageError(this)">
+            </div>
+            <div class="modal-body">
+                <span class="modal-category-badge" id="modal-food-category">Category</span>
+                <h2 class="modal-title" id="modal-food-name">Food Name</h2>
+                
+                <div class="modal-meta">
+                    <span id="modal-food-prep">⏱ 10 min prep</span>
+                    <span>&bull;</span>
+                    <span id="modal-food-stock" class="stock-status">
+                        <span class="dot available"></span> Available
+                    </span>
+                </div>
+                
+                <p class="modal-description" id="modal-food-desc">Description of the delicious item.</p>
+                
+                <div id="modal-variants-container" class="hidden">
+                    <div class="variant-selector-title">Select Option:</div>
+                    <div class="variant-pill-group" id="modal-variants-list">
+                        <!-- Variant buttons -->
+                    </div>
+                </div>
+                
+                <div class="qty-row">
+                    <span style="font-weight: 600; font-size: 0.95rem;">Select Quantity:</span>
+                    <div class="qty-controls">
+                        <button type="button" class="qty-btn" id="modal-qty-dec" aria-label="Decrease quantity">&minus;</button>
+                        <span class="qty-display" id="modal-qty-val">1</span>
+                        <button type="button" class="qty-btn" id="modal-qty-inc" aria-label="Increase quantity">+</button>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--muted); text-transform: uppercase; font-weight: 600;">Total Price</div>
+                        <div class="modal-total-price" id="modal-total-price">₹0</div>
+                    </div>
+                    <button type="button" class="btn-add" id="modal-add-btn" style="padding: 0.75rem 1.75rem; font-size: 1rem;">
+                        🛒 Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Floating Cart Pill -->
+    <a href="/cart.html" id="floating-cart" class="floating-cart hidden" aria-label="Go to shopping cart">
+        <span>🛒</span>
+        <span id="floating-cart-count">0 items</span>
+        <span style="opacity: 0.6;">|</span>
+        <span id="floating-cart-total">₹0</span>
+    </a>
+    
+    <div id="footer-container"></div>
+    
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/menu.js"></script>
+</body>
+</html>
