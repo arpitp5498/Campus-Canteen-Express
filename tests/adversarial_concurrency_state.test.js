@@ -267,12 +267,14 @@ describe('Adversarial Challenge: Concurrency, State Machine & Token Integrity', 
 
     beforeEach(async () => {
       const todayStr = new Date().toISOString().split('T')[0];
-      const slotTime = `20:${Math.floor(10 + Math.random() * 40)}:00`;
-      const slotEndTime = `20:${Math.floor(50 + Math.random() * 9)}:00`;
+      const randId = `${Date.now() % 10000}_${Math.floor(Math.random() * 1000)}`;
+      const slotTime = `20:${String(Math.floor(Math.random() * 50)).padStart(2, '0')}:${String(Math.floor(Math.random() * 59)).padStart(2, '0')}`;
+      const slotEndTime = `21:${String(Math.floor(Math.random() * 50)).padStart(2, '0')}:${String(Math.floor(Math.random() * 59)).padStart(2, '0')}`;
       
       const insert = await db.prepare(`
         INSERT INTO pickup_slots (slot_date, start_time, end_time, max_capacity, current_orders, is_active)
         VALUES (?, ?, ?, 50, 0, 1)
+        ON DUPLICATE KEY UPDATE current_orders = 0
       `).run(todayStr, slotTime, slotEndTime);
 
       cancelSlotId = insert.lastInsertRowid;

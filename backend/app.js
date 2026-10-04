@@ -34,8 +34,13 @@ app.use(
   })
 );
 
-// 3. Request Body Parsers
-app.use(express.json({ limit: '1mb' }));
+// 3. Request Body Parsers (with rawBody capture for webhook signature verification)
+app.use(express.json({
+  limit: '1mb',
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // 4. Static Frontend File Serving

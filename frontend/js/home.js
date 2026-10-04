@@ -1,3 +1,8 @@
+/**
+ * Campus Canteen Express — Homepage Controller
+ * Fetches popular/featured menu items and renders rich food cards.
+ */
+
 document.addEventListener('DOMContentLoaded', () => {
     fetchPopularItems();
 });
@@ -7,31 +12,33 @@ async function fetchPopularItems() {
     if (!container) return;
 
     try {
-        container.innerHTML = '<div class="text-center text-muted" style="grid-column: 1 / -1;">Loading popular items...</div>';
+        container.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem; color: var(--slate-500);">
+                🔄 Loading today's favorites...
+            </div>
+        `;
         
-        // Fetch from API using global api object from api.js if available, or direct fetch
         let response;
         if (window.api && typeof window.api.get === 'function') {
-            response = await window.api.get('/menu?available_only=true');
+            response = await window.api.get('/menu');
         } else {
-            // Fallback if api object is structured differently
-            const res = await fetch('/api/menu?available_only=true');
+            const res = await fetch('/api/menu');
             response = await res.json();
         }
         
-        if (response && response.success && response.data) {
-            // Select up to 4 items to show as popular
-            const allItems = response.data.items || response.data || [];
-            const items = allItems.slice(0, 4);
-            renderPopularItems(items, container);
+        if (response && response.success) {
+            const allItems = response.data?.items || response.data || response.items || [];
+            // Pick 4 featured popular items (e.g. sandwiches, pizza, maggi, beverages)
+            const popularItems = allItems.slice(0, 4);
+            renderPopularItems(popularItems, container);
         } else {
             throw new Error((response && response.message) || 'Failed to load popular items');
         }
     } catch (error) {
         console.error('Error fetching popular items:', error);
         container.innerHTML = `
-            <div class="text-center" style="grid-column: 1 / -1; color: red;">
-                Failed to load popular items. Please try again later.
+            <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: var(--error);">
+                Failed to load popular items. Please try refreshing.
             </div>
         `;
     }
@@ -39,25 +46,49 @@ async function fetchPopularItems() {
 
 function renderPopularItems(items, container) {
     if (!items || items.length === 0) {
-        container.innerHTML = '<div class="text-center text-muted" style="grid-column: 1 / -1;">No items available right now.</div>';
+        container.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: var(--slate-500);">
+                No featured items available right now.
+            </div>
+        `;
         return;
     }
 
-    container.innerHTML = items.map(item => `
-        <article class="food-card">
-            <div class="food-image">
-                ${item.image_url 
-                    ? `<img src="${item.image_url}" alt="${item.name}">` 
-                    : `<span class="text-muted">No Image</span>`}
-            </div>
-            <div class="food-info">
-                <h3 class="food-name">${item.name}</h3>
-                <p class="text-muted mb-4" style="font-size: 0.875rem;">${item.description || ''}</p>
-                <div class="food-footer">
-                    <span class="food-price">₹${parseFloat(item.price).toFixed(2)}</span>
-                    <a href="menu.html" class="btn btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">Order Now</a>
+    container.innerHTML = items.map(item => {
+        const price = Number(item.base_price ?? item.price ?? 0);
+        const prepTime = item.prep_time_minutes || item.prep_time || 10;
+        const isAvailable = item.is_available !== false && item.is_available !== 0;
+
+        return `
+            <article class="food-card ${!isAvailable ? 'out-of-stock' : ''}">
+                <div class="food-card-media" onclick="window.location.href='menu.html'">
+                    <img src="${item.image_url || '/images/food/placeholder.svg'}" alt="${escapeHtml(item.name)}" onerror="handleImageError(this)">
+                    <span class="food-card-badge">${escapeHtml(item.category || 'Special')}</span>
+                    ${!isAvailable ? '<div class="sold-out-overlay">Sold Out</div>' : ''}
                 </div>
-            </div>
-        </article>
-    `).join('');
+                <div class="food-card-content">
+                    <div class="food-card-title-row">
+                        <h3 class="food-name" onclick="window.location.href='menu.html'">${escapeHtml(item.name)}</h3>
+                        <span class="veg-indicator" title="100% Pure Vegetarian"></span>
+                    </div>
+                    <p class="food-desc">${escapeHtml(item.description || 'Freshly prepared upon your express order.')}</p>
+                    
+                    <div class="food-meta-row">
+                        <span class="prep-time">⏱ ${prepTime} min</span>
+                        <span class="stock-status">
+                            <span class="dot ${isAvailable ? 'available' : 'unavailable'}"></span>
+                            ${isAvailable ? 'Fresh &amp; Ready' : 'Sold Out'}
+                        </span>
+                    </div>
+
+                    <div class="food-action-row">
+                        <div class="food-price">${typeof formatPrice === 'function' ? formatPrice(price) : '₹' + price}</div>
+                        <a href="menu.html" class="btn btn-primary btn-sm">
+                            Order Now &rarr;
+                        </a>
+                    </div>
+                </div>
+            </article>
+        `;
+    }).join('');
 }

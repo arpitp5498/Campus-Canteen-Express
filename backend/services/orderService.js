@@ -262,13 +262,17 @@ async function createOrder(userId, { slot_id, items, order_type = 'TODAY' }) {
     }
 
     // 6. Create Mock/Razorpay Payment Descriptor
-    const isMock = paymentService.isMockMode();
-    const razorpayOrderId = isMock ? `order_mock_${orderId}_${Date.now()}` : `order_live_${orderId}`;
+    const paymentDescriptor = await paymentService.createPaymentOrder({
+      id: orderId,
+      order_number: orderNumber,
+      total_amount: totalAmount,
+      user_id: userId
+    });
 
     await tx.run(
       `INSERT INTO payments (order_id, user_id, amount, currency, payment_method, razorpay_order_id, status)
        VALUES (?, ?, ?, 'INR', ?, ?, 'PENDING')`,
-      [orderId, userId, totalAmount, isMock ? 'MOCK' : 'RAZORPAY', razorpayOrderId]
+      [orderId, userId, totalAmount, paymentDescriptor.payment_mode, paymentDescriptor.razorpay_order_id]
     );
 
     const createdOrderRow = await tx.get('SELECT * FROM orders WHERE id = ?', [orderId]);
@@ -277,15 +281,6 @@ async function createOrder(userId, { slot_id, items, order_type = 'TODAY' }) {
 
     // Student who created the order CAN see their token
     const formattedOrder = formatOrder(createdOrderRow, createdItems, slot, createdPayment, true);
-
-    const paymentDescriptor = {
-      is_mock: isMock,
-      payment_mode: isMock ? 'MOCK' : 'RAZORPAY',
-      razorpay_order_id: razorpayOrderId,
-      amount: Math.round(totalAmount * 100),
-      currency: 'INR',
-      key_id: isMock ? 'rzp_test_mock' : (config.razorpay.keyId || process.env.RAZORPAY_KEY_ID)
-    };
 
     return {
       order: formattedOrder,
@@ -363,6 +358,25 @@ async function verifyPayment(userId, { order_id, razorpay_order_id, razorpay_pay
     payment: updatedPayment,
     message: 'Payment verified successfully.'
   };
+}
+
+/**
+ * Record payment failure or cancellation for an order.
+ */
+async function recordPaymentFailure(orderId, userId, reason, razorpayPaymentId) {
+  const numId = Number(orderId);
+  const payment = await db.get('SELECT * FROM payments WHERE order_id = ?', [numId]);
+  if (payment && payment.status === 'PENDING') {
+    await db.run(
+      `UPDATE payments 
+       SET status = 'FAILED', 
+           razorpay_payment_id = COALESCE(?, razorpay_payment_id), 
+           updated_at = CURRENT_TIMESTAMP 
+       WHERE id = ?`,
+      [razorpayPaymentId || null, payment.id]
+    );
+  }
+  return { success: true, message: 'Payment failure recorded' };
 }
 
 /**
@@ -778,6 +792,8 @@ async function getAdminAnalytics(targetDate = null) {
 module.exports = {
   createOrder,
   verifyPayment,
+  recordPaymentFailure,
+  retryPayment: paymentService.retryPaymentOrder,
   getUserOrders,
   getOrderById,
   cancelOrder,

@@ -5,39 +5,105 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Campus Canteen Express</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .auth-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 1.4rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+            color: var(--slate-900);
+        }
+
+        .auth-brand span {
+            color: var(--primary);
+        }
+
+        .demo-accounts-box {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: var(--slate-50);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+        }
+
+        .demo-pill-btn {
+            flex: 1;
+            padding: 6px 10px;
+            font-size: 0.775rem;
+            font-weight: 700;
+            border-radius: var(--radius-xs);
+            background: var(--white);
+            border: 1px solid var(--border);
+            color: var(--slate-700);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .demo-pill-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary-dark);
+            background: var(--primary-surface);
+        }
+    </style>
 </head>
 <body class="auth-page">
-    <main class="container">
-        <div class="auth-card">
-            <h2>Welcome Back</h2>
-            <p class="text-muted">Login to your account to order food</p>
+    <main class="container" style="display: flex; justify-content: center; align-items: center; min-height: 85vh;">
+        <div class="card" style="max-width: 440px; width: 100%; padding: 2.25rem; box-shadow: var(--shadow-lg);">
+            <div class="auth-brand">
+                <div class="brand-icon-box">🍽️</div>
+                <span>Campus</span> Canteen
+            </div>
+
+            <div style="text-align: center; margin-bottom: 1.75rem;">
+                <h2 style="font-size: 1.6rem; font-weight: 900; margin-bottom: 0.35rem; color: var(--slate-900);">
+                    Welcome Back
+                </h2>
+                <p style="color: var(--slate-500); font-size: 0.9rem;">
+                    Sign in to pre-order food and manage your pickups
+                </p>
+            </div>
             
             <form id="loginForm" novalidate>
                 <div class="form-group">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" id="email" class="form-input" required>
+                    <label for="email" class="form-label">Campus Email</label>
+                    <input type="email" id="email" class="form-input" placeholder="e.g. student@campus.edu" required autocomplete="email">
                     <div class="form-error" id="emailError"></div>
                 </div>
                 
                 <div class="form-group">
                     <label for="password" class="form-label">Password</label>
-                    <input type="password" id="password" class="form-input" required minlength="6">
+                    <input type="password" id="password" class="form-input" placeholder="Enter your password" required minlength="6" autocomplete="current-password">
                     <div class="form-error" id="passwordError"></div>
                 </div>
                 
-                <button type="submit" class="btn btn-primary btn-block" id="loginBtn" style="width: 100%; margin-top: 10px;">Login</button>
+                <button type="submit" class="btn btn-primary btn-block" id="loginBtn" style="padding: 0.85rem; font-size: 1rem; font-weight: 700; margin-top: 0.5rem;">
+                    Sign In
+                </button>
                 
-                <div style="margin-top: 20px; padding: 12px; background: var(--border-light); border-radius: var(--radius); font-size: 12px;">
-                    <p style="font-weight: 600; margin-bottom: 6px; color: var(--text);">Quick Demo Accounts:</p>
-                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                        <button type="button" class="btn btn-outline btn-sm" style="flex: 1; font-size: 11px; padding: 4px 8px;" onclick="document.getElementById('email').value='student@campus.edu';document.getElementById('password').value='Student@12345';">👤 Student</button>
-                        <button type="button" class="btn btn-outline btn-sm" style="flex: 1; font-size: 11px; padding: 4px 8px;" onclick="document.getElementById('email').value='admin@canteen.local';document.getElementById('password').value='Admin@123';">🛡️ Admin</button>
+                <!-- Quick Demo Accounts Switcher -->
+                <div class="demo-accounts-box">
+                    <div style="font-weight: 700; margin-bottom: 0.5rem; color: var(--slate-800); display: flex; align-items: center; gap: 6px;">
+                        <span>⚡</span> Quick Demo Login:
                     </div>
-                    <p style="color: var(--muted); margin: 0;">Student: <code>student@campus.edu</code> (<code>Student@12345</code>)<br>Admin: <code>admin@canteen.local</code> (<code>Admin@123</code>)</p>
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <button type="button" class="demo-pill-btn" onclick="document.getElementById('email').value='student@campus.edu';document.getElementById('password').value='Student@12345';">
+                            👤 Student Account
+                        </button>
+                        <button type="button" class="demo-pill-btn" onclick="document.getElementById('email').value='admin@canteen.local';document.getElementById('password').value='Admin@123';">
+                            🛡️ Admin Staff
+                        </button>
+                    </div>
+                    <div style="color: var(--slate-500); line-height: 1.4; font-size: 0.75rem;">
+                        Click either button to autofill and then press <strong>Sign In</strong>.
+                    </div>
                 </div>
 
-                <p class="mt-4 text-center text-sm" style="margin-top: 15px; text-align: center;">
-                    Don't have an account? <a href="/register.html" class="text-primary font-medium">Sign up</a>
+                <p style="margin-top: 1.5rem; text-align: center; font-size: 0.875rem; color: var(--slate-600);">
+                    Don't have an account? <a href="/register.html" style="font-weight: 700; color: var(--primary);">Create an account</a>
                 </p>
             </form>
         </div>

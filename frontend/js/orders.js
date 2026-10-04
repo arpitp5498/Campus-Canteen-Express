@@ -45,7 +45,18 @@ function showConfirmationCard(order) {
     const slotEl = document.getElementById('confirm-slot-time');
 
     if (numEl) numEl.textContent = `Order #${order.order_number || order.id}`;
-    if (tokenEl) tokenEl.textContent = order.pickup_token || '----';
+
+    // Get pickup token from order, sessionStorage, or studentOrders cache
+    let token = order.pickup_token;
+    if (!token && order.id) {
+        token = sessionStorage.getItem('cce_confirmed_token_' + order.id);
+    }
+    if (!token && Array.isArray(studentOrders)) {
+        const found = studentOrders.find(o => String(o.id) === String(order.id));
+        if (found && found.pickup_token) token = found.pickup_token;
+    }
+
+    if (tokenEl) tokenEl.textContent = token || '----';
 
     const orderType = order.order_type || 'TODAY';
     const typeLabel = orderType === 'TOMORROW' ? "📅 Tomorrow's Lunch" : "🍽️ Today's Lunch";
@@ -102,6 +113,19 @@ async function loadOrders() {
         if (res.success) {
             studentOrders = Array.isArray(res.data?.orders) ? res.data.orders : (Array.isArray(res.data) ? res.data : []);
             renderOrders();
+
+            // Check if confirmation card needs token update
+            const tokenEl = document.getElementById('confirm-token-value');
+            if (tokenEl && (tokenEl.textContent === '----' || !tokenEl.textContent) && studentOrders.length > 0) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const confirmedId = urlParams.get('confirmed');
+                const match = confirmedId 
+                    ? studentOrders.find(o => String(o.id) === String(confirmedId))
+                    : studentOrders[0];
+                if (match && match.pickup_token) {
+                    tokenEl.textContent = match.pickup_token;
+                }
+            }
         } else {
             throw new Error(res.message || 'Failed to load your orders.');
         }
@@ -159,8 +183,8 @@ function createOrderCard(order) {
     // Lunch Type Badge
     const orderType = order.order_type || 'TODAY';
     const typeBadge = orderType === 'TOMORROW'
-        ? `<span style="background-color: #EFF6FF; color: #1D4ED8; padding: 4px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 700;">📅 Tomorrow's Lunch</span>`
-        : `<span style="background-color: #F0FDF4; color: #16A34A; padding: 4px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 700;">🍽️ Today's Lunch</span>`;
+        ? `<span style="background-color: #EFF6FF; color: #1D4ED8; padding: 4px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; border: 1px solid #BFDBFE;">📅 Tomorrow's Lunch</span>`
+        : `<span style="background-color: #F0FDF4; color: #16A34A; padding: 4px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; border: 1px solid #BBF7D0;">🍽️ Today's Lunch</span>`;
 
     // Status Badge
     const badgeHtml = typeof getStatusBadgeHtml === 'function' 
@@ -222,9 +246,9 @@ function createOrderCard(order) {
             <div class="order-item-line">
                 <div>
                     <strong>${qty}x</strong> ${escapeHtml(name)}
-                    ${varName ? `<div style="font-size: 0.78rem; color: var(--muted);">${escapeHtml(varName)}</div>` : ''}
+                    ${varName ? `<div style="font-size: 0.78rem; color: var(--slate-500); font-weight: 600;">${escapeHtml(varName)}</div>` : ''}
                 </div>
-                <div style="font-weight: 600;">₹${itemTotal.toFixed(2)}</div>
+                <div style="font-weight: 700; color: var(--slate-900);">₹${itemTotal.toFixed(2)}</div>
             </div>
         `;
     });
@@ -244,13 +268,13 @@ function createOrderCard(order) {
     if (order.pickup_token && status !== 'CANCELLED') {
         tokenHtml = `
             <div class="token-private-badge">
-                <div style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: #15803D; letter-spacing: 0.05em;">
+                <div style="font-size: 0.725rem; font-weight: 800; text-transform: uppercase; color: var(--primary-dark); letter-spacing: 0.06em;">
                     🔒 Pickup Token (Show at Counter)
                 </div>
-                <div style="font-family: monospace; font-size: 1.8rem; font-weight: 900; letter-spacing: 0.2rem; color: #15803D; margin: 0.15rem 0;">
+                <div style="font-family: 'Courier New', monospace; font-size: 1.85rem; font-weight: 900; letter-spacing: 0.25rem; color: var(--primary-dark); margin: 0.2rem 0;">
                     ${order.pickup_token}
                 </div>
-                <div style="font-size: 0.75rem; color: var(--muted);">
+                <div style="font-size: 0.75rem; color: var(--slate-600); font-weight: 500;">
                     ${status === 'READY' ? '🎉 Ready now! Proceed to Express Counter.' : 'Show when order status changes to READY.'}
                 </div>
             </div>
@@ -260,14 +284,14 @@ function createOrderCard(order) {
     // Cancellation button (Permitted strictly for PLACED or ACCEPTED)
     const canCancel = (status === 'PLACED' || status === 'ACCEPTED');
     const cancelBtn = canCancel 
-        ? `<button type="button" class="btn btn-outline btn-sm" onclick="openCancelModal('${order.id}')" style="color: #EF4444; border-color: #FCA5A5;">
+        ? `<button type="button" class="btn btn-outline btn-sm" onclick="openCancelModal('${order.id}')" style="color: var(--error); border-color: var(--error-border);">
             Cancel Order
            </button>` 
         : '';
 
     // Reorder button
     const reorderBtn = `
-        <button type="button" class="btn btn-outline btn-sm" onclick='reorderItems(${JSON.stringify(items).replace(/'/g, "&apos;")})'>
+        <button type="button" class="btn btn-secondary btn-sm" onclick='reorderItems(${JSON.stringify(items).replace(/'/g, "&apos;")})'>
             🔄 Order Again
         </button>
     `;
@@ -297,9 +321,9 @@ function createOrderCard(order) {
             <div>
                 <div class="items-section-title">Pickup Details</div>
                 <div class="pickup-box">
-                    <div style="font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem;">Assigned Window</div>
-                    <div style="font-weight: 700; color: var(--text);">${slotDisplay}</div>
-                    <div style="font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem;">Pickup Date: ${order.pickup_date || 'Today'}</div>
+                    <div style="font-size: 0.775rem; font-weight: 600; color: var(--slate-500); margin-bottom: 0.25rem;">Assigned Window</div>
+                    <div style="font-weight: 800; font-size: 1rem; color: var(--slate-900);">${slotDisplay}</div>
+                    <div style="font-size: 0.8rem; color: var(--slate-500); margin-top: 0.25rem;">Pickup Date: ${order.pickup_date || 'Today'}</div>
                     ${tokenHtml}
                 </div>
             </div>
@@ -307,8 +331,8 @@ function createOrderCard(order) {
 
         <div class="order-footer-bar">
             <div>
-                <span style="font-size: 0.9rem; color: var(--muted);">Total Paid: </span>
-                <span style="font-size: 1.25rem; font-weight: 800; color: var(--text);">₹${parseFloat(order.total_amount || 0).toFixed(2)}</span>
+                <span style="font-size: 0.875rem; color: var(--slate-500);">Total Paid: </span>
+                <span style="font-size: 1.3rem; font-weight: 900; color: var(--slate-900);">₹${parseFloat(order.total_amount || 0).toFixed(2)}</span>
             </div>
             <div class="order-actions-group">
                 ${cancelBtn}
@@ -406,7 +430,7 @@ function reorderItems(items) {
     showToast(`Added ${addedCount} items to your cart!`, 'success');
     setTimeout(() => {
         window.location.href = '/cart.html';
-    }, 600);
+    }, 500);
 }
 
 // Global window bindings for inline HTML onclick handlers
@@ -414,4 +438,3 @@ window.openCancelModal = openCancelModal;
 window.closeCancelModal = closeCancelModal;
 window.dismissConfirmationCard = dismissConfirmationCard;
 window.reorderItems = reorderItems;
-

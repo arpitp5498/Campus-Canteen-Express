@@ -3,168 +3,453 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Campus Canteen Express | Skip the Queue. Enjoy Your Break.</title>
+    <title>Campus Canteen Express | Pre-Order &amp; Skip the Lunch Queue</title>
     <link rel="stylesheet" href="css/styles.css">
     <style>
+        /* Hero Section */
         .hero {
-            padding: 4rem 1rem;
-            background: linear-gradient(135deg, var(--background) 0%, var(--border) 100%);
+            padding: 3.5rem 0 4rem;
+            background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
         }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary-surface);
+            border: 1px solid var(--primary-border);
+            color: var(--primary-dark);
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            font-size: 0.825rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            letter-spacing: 0.02em;
+        }
+
         .hero-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--text);
-            margin-bottom: 1rem;
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--slate-900);
+            line-height: 1.15;
+            margin-bottom: 1.25rem;
+            letter-spacing: -0.03em;
         }
+
+        .hero-title span {
+            color: var(--primary);
+        }
+
         .hero-subtitle {
-            font-size: 1.25rem;
-            color: var(--muted);
+            font-size: 1.15rem;
+            color: var(--slate-600);
+            line-height: 1.6;
             margin-bottom: 2rem;
-            max-width: 600px;
-            margin-inline: auto;
+            max-width: 560px;
         }
+
         .hero-actions {
             display: flex;
-            gap: 1rem;
-            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 2.5rem;
         }
-        .text-center { text-align: center; }
-        .text-primary { color: var(--primary); }
-        .text-muted { color: var(--muted); }
-        .font-bold { font-weight: 700; }
-        .mb-2 { margin-bottom: 0.5rem; }
-        .mb-4 { margin-bottom: 1rem; }
-        .mb-8 { margin-bottom: 2rem; }
-        .mt-8 { margin-top: 2rem; }
-        .text-xl { font-size: 1.25rem; }
-        .text-2xl { font-size: 1.5rem; }
-        .text-3xl { font-size: 1.875rem; }
-        .text-4xl { font-size: 2.25rem; }
-        .p-6 { padding: 1.5rem; }
-        .bg-background { background-color: var(--background); }
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
-        .list-disc { list-style-type: disc; }
-        .pl-5 { padding-left: 1.25rem; }
-        .space-y-2 > * + * { margin-top: 0.5rem; }
-        
-        .food-card { display: flex; flex-direction: column; background: var(--white); border-radius: var(--radius); padding: 1rem; box-shadow: var(--shadow); }
-        .food-image { aspect-ratio: 16/9; background: var(--border); border-radius: var(--radius-sm); margin-bottom: 1rem; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-        .food-image img { width: 100%; height: 100%; object-fit: cover; }
-        .food-info { flex: 1; display: flex; flex-direction: column; }
-        .food-name { font-weight: 700; color: var(--text); margin-bottom: 0.25rem; }
-        .food-price { font-weight: 700; color: var(--primary); }
-        .food-footer { margin-top: auto; display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; }
+
+        .hero-metrics {
+            display: flex;
+            gap: 2rem;
+            border-top: 1px solid var(--border);
+            padding-top: 1.5rem;
+        }
+
+        .hero-metric-item h4 {
+            font-size: 1.35rem;
+            font-weight: 900;
+            color: var(--slate-900);
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .hero-metric-item p {
+            font-size: 0.8rem;
+            color: var(--slate-500);
+            margin: 2px 0 0 0;
+            font-weight: 600;
+        }
+
+        /* Hero Showcase Card */
+        .hero-showcase-card {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-xl);
+            padding: 1.75rem;
+            position: relative;
+        }
+
+        .hero-showcase-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .hero-preview-dish {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            background: var(--slate-50);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .hero-dish-thumb {
+            width: 72px;
+            height: 72px;
+            border-radius: var(--radius-sm);
+            object-fit: cover;
+            border: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .hero-token-pill {
+            background: var(--primary-surface);
+            border: 1.5px dashed var(--primary);
+            border-radius: var(--radius);
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .hero-token-val {
+            font-family: 'Courier New', monospace;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--primary-dark);
+            letter-spacing: 0.25rem;
+            margin: 4px 0;
+        }
+
+        /* Category Chips Bar */
+        .category-strip {
+            padding: 2rem 0;
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .category-strip-title {
+            font-size: 0.875rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--slate-400);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .chips-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .category-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--slate-50);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: var(--radius-full);
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--slate-700);
+            text-decoration: none;
+            transition: all var(--transition-fast);
+        }
+
+        .category-chip:hover {
+            background: var(--primary-surface);
+            border-color: var(--primary);
+            color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        /* How It Works Grid */
+        .step-num-bubble {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.15rem;
+            margin: 0 auto 1.25rem;
+            box-shadow: 0 4px 10px rgba(22, 163, 74, 0.3);
+        }
+
+        .how-card {
+            background: var(--white);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            padding: 1.75rem 1.25rem;
+            text-align: center;
+            box-shadow: var(--shadow-xs);
+            transition: transform var(--transition-fast);
+        }
+
+        .how-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Express Promo Banner */
+        .promo-banner {
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+            border-radius: var(--radius-xl);
+            padding: 3rem 2rem;
+            color: #FFFFFF;
+            text-align: center;
+            margin: 3rem 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow-xl);
+        }
+
+        @media (max-width: 900px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+                gap: 2.5rem;
+            }
+            .hero-title {
+                font-size: 2.35rem;
+            }
+        }
     </style>
 </head>
 <body>
     <main>
         <!-- Hero Section -->
-        <section class="hero section">
-            <div class="container text-center">
-                <h1 class="hero-title">Skip the Queue. Enjoy Your Break.</h1>
-                <p class="hero-subtitle">Pre-order your favorite campus food and pick it up from the Express Counter.</p>
-                <div class="hero-actions">
-                    <a href="menu.html" class="btn btn-primary btn-primary">Order Now</a>
-                    <a href="#how-it-works" class="btn btn-secondary btn-secondary">How It Works</a>
+        <section class="hero">
+            <div class="container">
+                <div class="hero-grid">
+                    <div>
+                        <div class="hero-badge">
+                            ⚡ Express Canteen Pickup Counter
+                        </div>
+                        <h1 class="hero-title">
+                            Skip the Canteen Queue.<br>
+                            <span>Enjoy Your Break.</span>
+                        </h1>
+                        <p class="hero-subtitle">
+                            Pre-order delicious campus food from your phone. Pick a guaranteed 10-minute pickup slot between 12:00 PM and 1:00 PM, flash your 4-character token, and grab your meal instantly.
+                        </p>
+                        
+                        <div class="hero-actions">
+                            <a href="menu.html" class="btn btn-primary btn-lg">
+                                🍽️ Browse Express Menu
+                            </a>
+                            <a href="#how-it-works" class="btn btn-secondary btn-lg">
+                                💡 How It Works
+                            </a>
+                        </div>
+
+                        <div class="hero-metrics">
+                            <div class="hero-metric-item">
+                                <h4>10 Mins</h4>
+                                <p>Guaranteed Slots</p>
+                            </div>
+                            <div class="hero-metric-item">
+                                <h4>23 Dishes</h4>
+                                <p>Pure Veg Catalog</p>
+                            </div>
+                            <div class="hero-metric-item">
+                                <h4>₹1 - ₹3</h4>
+                                <p>Express Booking</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <!-- Hero Preview Card -->
+                        <div class="hero-showcase-card">
+                            <div class="hero-showcase-header">
+                                <span class="badge badge-success">● Counter Live</span>
+                                <span style="font-size: 0.8rem; font-weight: 700; color: var(--slate-500);">Lunch 12:00 - 1:00 PM</span>
+                            </div>
+
+                            <div class="hero-preview-dish">
+                                <img src="/images/food/cheese_grilled_sandwich.jpg" alt="Cheese Grilled Sandwich" class="hero-dish-thumb" onerror="handleImageError(this)">
+                                <div>
+                                    <h4 style="font-size: 1rem; font-weight: 800; margin-bottom: 2px;">Cheese Grilled Sandwich</h4>
+                                    <p style="font-size: 0.8rem; color: var(--slate-500); margin: 0;">Golden toasted with melted mozzarella &amp; sweet corn</p>
+                                    <span style="font-weight: 800; font-size: 0.95rem; color: var(--primary-dark);">₹55.00</span>
+                                </div>
+                            </div>
+
+                            <div class="hero-token-pill">
+                                <div style="font-size: 0.725rem; font-weight: 800; text-transform: uppercase; color: var(--primary-dark); letter-spacing: 0.08em;">
+                                    🔒 Your Private Pickup Token
+                                </div>
+                                <div class="hero-token-val">7THJ</div>
+                                <div style="font-size: 0.78rem; color: var(--slate-600);">
+                                    Slot: <strong>12:10 PM - 12:20 PM</strong> &bull; Status: <strong style="color: var(--primary);">READY</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Features Section -->
-        <section class="features section">
+        <!-- Category Quick Discovery Strip -->
+        <section class="category-strip">
             <div class="container">
-                <div class="grid grid-4">
-                    <article class="feature-card card text-center">
-                        <div class="feature-icon text-primary text-3xl mb-4">⚡</div>
-                        <h3 class="feature-title text-xl font-bold mb-2">Fast Pickup</h3>
-                        <p class="feature-desc text-muted">Order ahead, skip the line</p>
-                    </article>
-                    <article class="feature-card card text-center">
-                        <div class="feature-icon text-primary text-3xl mb-4">🕐</div>
-                        <h3 class="feature-title text-xl font-bold mb-2">Choose Pickup Slot</h3>
-                        <p class="feature-desc text-muted">Pick your preferred time window</p>
-                    </article>
-                    <article class="feature-card card text-center">
-                        <div class="feature-icon text-primary text-3xl mb-4">💳</div>
-                        <h3 class="feature-title text-xl font-bold mb-2">Easy Digital Payment</h3>
-                        <p class="feature-desc text-muted">Pay securely online</p>
-                    </article>
-                    <article class="feature-card card text-center">
-                        <div class="feature-icon text-primary text-3xl mb-4">🎫</div>
-                        <h3 class="feature-title text-xl font-bold mb-2">Pickup Token</h3>
-                        <p class="feature-desc text-muted">Get a unique token for quick collection</p>
-                    </article>
+                <div class="category-strip-title">Fast Menu Navigation</div>
+                <div class="chips-container">
+                    <a href="menu.html" class="category-chip">✨ All 23 Dishes</a>
+                    <a href="menu.html" class="category-chip">🥪 Sandwiches</a>
+                    <a href="menu.html" class="category-chip">🍟 Hot Snacks</a>
+                    <a href="menu.html" class="category-chip">🍛 Thali &amp; Meals</a>
+                    <a href="menu.html" class="category-chip">🌯 Kathi Rolls</a>
+                    <a href="menu.html" class="category-chip">☕ Cold &amp; Hot Drinks</a>
+                    <a href="menu.html" class="category-chip">🍰 Pastry &amp; Desserts</a>
                 </div>
             </div>
         </section>
 
         <!-- Popular Today Section -->
-        <section id="popular" class="popular section bg-background">
+        <section class="section" id="popular" style="background: var(--slate-50);">
             <div class="container">
-                <h2 class="section-title text-2xl font-bold text-center mb-8">Popular Today</h2>
-                <div id="popular-items-container" class="grid grid-4">
-                    <!-- Populated by JS -->
+                <div class="text-center" style="margin-bottom: 2.5rem;">
+                    <span class="badge badge-success" style="margin-bottom: 8px;">Campus Favorites</span>
+                    <h2 style="font-size: 2.25rem; font-weight: 900; margin-bottom: 0.5rem;">Popular Today</h2>
+                    <p style="font-size: 1rem; color: var(--slate-600); max-width: 500px; margin: 0 auto;">
+                        The most ordered meals by students today. Pre-order before slots fill up!
+                    </p>
                 </div>
-                <div class="text-center mt-8">
-                    <a href="menu.html" class="btn btn-primary">View Full Menu</a>
+
+                <div id="popular-items-container" class="grid grid-4">
+                    <!-- Populated via JS -->
+                </div>
+
+                <div class="text-center" style="margin-top: 2.5rem;">
+                    <a href="menu.html" class="btn btn-primary btn-lg">
+                        Explore Full 23-Dish Menu &rarr;
+                    </a>
                 </div>
             </div>
         </section>
 
         <!-- How It Works Section -->
-        <section id="how-it-works" class="how-it-works section">
+        <section class="section" id="how-it-works" style="background: var(--white);">
             <div class="container">
-                <h2 class="section-title text-2xl font-bold text-center mb-8">How It Works</h2>
+                <div class="text-center" style="margin-bottom: 3rem;">
+                    <span class="badge badge-info" style="margin-bottom: 8px;">Effortless Flow</span>
+                    <h2 style="font-size: 2.25rem; font-weight: 900; margin-bottom: 0.5rem;">How Express Ordering Works</h2>
+                    <p style="font-size: 1rem; color: var(--slate-600); max-width: 540px; margin: 0 auto;">
+                        Designed specifically for busy campus schedules. Order in under 60 seconds.
+                    </p>
+                </div>
+
                 <div class="grid grid-4">
-                    <article class="step-card card text-center">
-                        <div class="step-number text-primary text-4xl font-bold mb-4">1</div>
-                        <h3 class="step-title text-xl font-bold mb-2">Choose Food</h3>
-                        <p class="step-desc text-muted">Browse the campus canteen menu</p>
+                    <article class="how-card">
+                        <div class="step-num-bubble">1</div>
+                        <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 6px;">Choose Food</h3>
+                        <p style="font-size: 0.875rem; color: var(--slate-600); line-height: 1.5;">
+                            Browse freshly prepared sandwiches, rolls, meals, snacks, or chilled drinks.
+                        </p>
                     </article>
-                    <article class="step-card card text-center">
-                        <div class="step-number text-primary text-4xl font-bold mb-4">2</div>
-                        <h3 class="step-title text-xl font-bold mb-2">Order & Pay</h3>
-                        <p class="step-desc text-muted">Pay securely with UPI or card</p>
+
+                    <article class="how-card">
+                        <div class="step-num-bubble">2</div>
+                        <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 6px;">Select Slot</h3>
+                        <p style="font-size: 0.875rem; color: var(--slate-600); line-height: 1.5;">
+                            Pick your 10-minute lunch slot (12:00 PM – 1:00 PM) for Today (₹3) or Tomorrow (₹1).
+                        </p>
                     </article>
-                    <article class="step-card card text-center">
-                        <div class="step-number text-primary text-4xl font-bold mb-4">3</div>
-                        <h3 class="step-title text-xl font-bold mb-2">Get Pickup Token</h3>
-                        <p class="step-desc text-muted">Receive a unique 4-character token</p>
+
+                    <article class="how-card">
+                        <div class="step-num-bubble">3</div>
+                        <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 6px;">Get Private Token</h3>
+                        <p style="font-size: 0.875rem; color: var(--slate-600); line-height: 1.5;">
+                            Receive a private 4-character pickup token on your receipt. Zero queue leaks.
+                        </p>
                     </article>
-                    <article class="step-card card text-center">
-                        <div class="step-number text-primary text-4xl font-bold mb-4">4</div>
-                        <h3 class="step-title text-xl font-bold mb-2">Collect from Express Counter</h3>
-                        <p class="step-desc text-muted">Show token, grab food, enjoy your break</p>
+
+                    <article class="how-card">
+                        <div class="step-num-bubble">4</div>
+                        <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 6px;">Instant Pickup</h3>
+                        <p style="font-size: 0.875rem; color: var(--slate-600); line-height: 1.5;">
+                            Show your token at the Express Counter once marked READY and collect your fresh food.
+                        </p>
                     </article>
                 </div>
             </div>
         </section>
 
+        <!-- Express Promo Window Banner -->
+        <div class="container">
+            <div class="promo-banner">
+                <span class="badge badge-warning" style="margin-bottom: 12px;">Pre-Order &amp; Save</span>
+                <h2 style="font-size: 2.25rem; font-weight: 900; margin-bottom: 0.75rem; color: #FFFFFF;">
+                    Book Tomorrow's Lunch for Just ₹1 Express Fee
+                </h2>
+                <p style="font-size: 1.05rem; color: #CBD5E1; max-width: 600px; margin: 0 auto 1.75rem; line-height: 1.6;">
+                    Plan your breaks in advance! Tomorrow's pre-orders save you ₹2 on express fees while reserving your preferred pickup window.
+                </p>
+                <a href="menu.html" class="btn btn-primary btn-lg" style="background: #22C55E; border-color: #22C55E; color: #0F172A; font-weight: 800;">
+                    ⚡ Start Pre-Ordering Now
+                </a>
+            </div>
+        </div>
+
         <!-- Benefits Section -->
-        <section class="benefits section bg-background">
+        <section class="section" style="background: var(--slate-50);">
             <div class="container">
-                <h2 class="section-title text-2xl font-bold text-center mb-8">Why Use Campus Canteen Express?</h2>
+                <div class="text-center" style="margin-bottom: 2.5rem;">
+                    <h2 style="font-size: 2rem; font-weight: 900; margin-bottom: 0.5rem;">Built for Campus Life</h2>
+                    <p style="color: var(--slate-600);">Solving lunch rush congestion for students and kitchen staff alike.</p>
+                </div>
+
                 <div class="grid-2">
-                    <article class="benefit-card card p-6">
-                        <h3 class="text-xl font-bold mb-4 text-primary">Student Benefits</h3>
-                        <ul class="list-disc pl-5 space-y-2 text-muted">
-                            <li>Saves break time</li>
-                            <li>Avoids long queues</li>
-                            <li>Easy ordering</li>
-                            <li>Clear pickup timing</li>
-                            <li>Digital order tracking</li>
+                    <div class="card" style="padding: 2rem;">
+                        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--primary); margin-bottom: 1rem;">
+                            🎓 Student Advantages
+                        </h3>
+                        <ul style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.95rem; color: var(--slate-700);">
+                            <li>⚡ <strong>Zero Wait Time:</strong> Food is prepared right on schedule for your 10-minute slot.</li>
+                            <li>🔒 <strong>Private Token Security:</strong> Only you hold your unique 4-character pickup token.</li>
+                            <li>🔄 <strong>Easy Reordering:</strong> Order previous favorite combinations with one click.</li>
+                            <li>📅 <strong>Advance Booking:</strong> Secure tomorrow's meal ahead of time for just ₹1.</li>
                         </ul>
-                    </article>
-                    <article class="benefit-card card p-6">
-                        <h3 class="text-xl font-bold mb-4 text-primary">Canteen Benefits</h3>
-                        <ul class="list-disc pl-5 space-y-2 text-muted">
-                            <li>Advance order visibility</li>
-                            <li>Better food prep planning</li>
-                            <li>Lower wait times</li>
-                            <li>Reduced wastage</li>
-                            <li>Peak-hour demand visibility</li>
+                    </div>
+
+                    <div class="card" style="padding: 2rem;">
+                        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--primary); margin-bottom: 1rem;">
+                            👨‍🍳 Canteen Kitchen Advantages
+                        </h3>
+                        <ul style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.95rem; color: var(--slate-700);">
+                            <li>📊 <strong>Demand Visibility:</strong> Real-time overview of incoming orders before the rush hits.</li>
+                            <li>⏱️ <strong>Load Balanced Prep:</strong> 15-order slot caps prevent kitchen bottlenecks.</li>
+                            <li>🔑 <strong>Token Verification:</strong> Fast, error-free handovers with SHA-256 token verification.</li>
+                            <li>📦 <strong>Inventory Control:</strong> Instant in-stock/out-of-stock toggles across the catalog.</li>
                         </ul>
-                    </article>
+                    </div>
                 </div>
             </div>
         </section>

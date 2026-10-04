@@ -14,9 +14,25 @@ let modalActiveItem = null;
 let modalActiveVariant = null;
 let modalQuantity = 1;
 
-const CATEGORIES = ['All', 'Sandwiches', 'Snacks', 'Meals', 'Rolls', 'Drinks', 'Desserts'];
+const CATEGORY_MAP = [
+    { key: 'All', label: '✨ All' },
+    { key: 'Sandwiches', label: '🥪 Sandwiches' },
+    { key: 'Snacks', label: '🍟 Snacks' },
+    { key: 'Meals', label: '🍛 Meals' },
+    { key: 'Rolls', label: '🌯 Rolls' },
+    { key: 'Drinks', label: '☕ Drinks' },
+    { key: 'Desserts', label: '🍰 Desserts' }
+];
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Check URL parameters for category selection (e.g. ?cat=Sandwiches)
+    const urlParams = new URLSearchParams(window.location.search);
+    const catParam = urlParams.get('cat');
+    if (catParam) {
+        const found = CATEGORY_MAP.find(c => c.key.toLowerCase() === catParam.toLowerCase());
+        if (found) currentCategory = found.key;
+    }
+
     initFilters();
     initSearchAndSort();
     initModalEvents();
@@ -33,13 +49,13 @@ function initFilters() {
     if (!filtersContainer) return;
     filtersContainer.innerHTML = '';
 
-    CATEGORIES.forEach(cat => {
+    CATEGORY_MAP.forEach(cat => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = `category-btn ${cat === 'All' ? 'active' : ''}`;
-        btn.textContent = cat;
+        btn.className = `category-btn ${cat.key === currentCategory ? 'active' : ''}`;
+        btn.textContent = cat.label;
         btn.setAttribute('role', 'tab');
-        btn.setAttribute('aria-selected', cat === 'All' ? 'true' : 'false');
+        btn.setAttribute('aria-selected', cat.key === currentCategory ? 'true' : 'false');
         btn.addEventListener('click', () => {
             document.querySelectorAll('.category-btn').forEach(b => {
                 b.classList.remove('active');
@@ -47,7 +63,7 @@ function initFilters() {
             });
             btn.classList.add('active');
             btn.setAttribute('aria-selected', 'true');
-            currentCategory = cat;
+            currentCategory = cat.key;
             renderMenu();
         });
         filtersContainer.appendChild(btn);
@@ -71,7 +87,7 @@ function resetFilters() {
     if (sortSelect) sortSelect.value = 'default';
 
     document.querySelectorAll('.category-btn').forEach(b => {
-        const isAll = b.textContent === 'All';
+        const isAll = b.textContent.includes('All');
         b.classList.toggle('active', isAll);
         b.setAttribute('aria-selected', isAll ? 'true' : 'false');
     });
@@ -88,7 +104,7 @@ function initSearchAndSort() {
         };
 
         if (typeof debounce === 'function') {
-            searchInput.addEventListener('input', debounce(onSearch, 250));
+            searchInput.addEventListener('input', debounce(onSearch, 200));
         } else {
             searchInput.addEventListener('input', onSearch);
         }
@@ -183,10 +199,10 @@ function renderMenu() {
 
     // Meta labels
     if (countLabel) {
-        countLabel.textContent = `Showing ${filtered.length} of ${allMenuItems.length} items`;
+        countLabel.textContent = `Showing ${filtered.length} of ${allMenuItems.length} dishes`;
     }
     if (filterLabel) {
-        filterLabel.textContent = currentCategory !== 'All' ? `Category: ${currentCategory}` : '';
+        filterLabel.textContent = currentCategory !== 'All' ? `• Filter: ${currentCategory}` : '';
     }
 
     menuGrid.innerHTML = '';
@@ -231,6 +247,7 @@ function createFoodCard(item) {
         <div class="food-card-content">
             <div class="food-card-title-row">
                 <h3 class="food-name" role="button" tabindex="0">${escapeHtml(item.name)}</h3>
+                <span class="veg-indicator" title="100% Pure Vegetarian"></span>
             </div>
             <p class="food-desc" title="${escapeHtml(item.description || '')}">${escapeHtml(item.description || 'Freshly prepared upon your express order.')}</p>
             

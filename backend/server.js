@@ -19,18 +19,33 @@ async function startServer() {
   }
   logger.info(`Database connected and healthy at: ${db.dbPath}`);
 
-  // 2. Start HTTP Listener
-  const PORT = config.port;
-  server = app.listen(PORT, () => {
-    logger.info(`Campus Canteen Express Server running in ${config.env} mode on port ${PORT}`);
-    logger.info(`REST API accessible at: http://localhost:${PORT}/api`);
-    logger.info(`Health check: http://localhost:${PORT}/api/health`);
-    if (config.razorpay.isMockMode) {
-      logger.info('Payment Service: Operating in Automated Mock Mode (Keys unset or mock)');
-    } else {
-      logger.info('Payment Service: Operating in Live Razorpay Mode');
-    }
-  });
+  // 2. Start HTTP Listener with Port Fallback
+  const targetPort = config.port;
+  function tryListen(currentPort, retriesLeft = 3) {
+    return new Promise((resolve, reject) => {
+      const s = app.listen(currentPort, () => {
+        logger.info(`Campus Canteen Express Server running in ${config.env} mode on port ${currentPort}`);
+        logger.info(`REST API accessible at: http://localhost:${currentPort}/api`);
+        logger.info(`Health check: http://localhost:${currentPort}/api/health`);
+        if (config.razorpay.isMockMode) {
+          logger.info('Payment Service: Operating in Automated Mock Mode (Keys unset or mock)');
+        } else {
+          logger.info('Payment Service: Operating in Live Razorpay Mode');
+        }
+        resolve(s);
+      });
+      s.once('error', (err) => {
+        if (err.code === 'EADDRINUSE' && retriesLeft > 0) {
+          logger.warn(`Port ${currentPort} is currently in use. Attempting fallback port ${currentPort + 1}...`);
+          resolve(tryListen(currentPort + 1, retriesLeft - 1));
+        } else {
+          reject(err);
+        }
+      });
+    });
+  }
+
+  server = await tryListen(targetPort);
 
   // 3. Graceful Shutdown Handlers
   function handleGracefulShutdown(signal) {

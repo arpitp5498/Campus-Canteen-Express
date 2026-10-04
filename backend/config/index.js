@@ -31,11 +31,18 @@ const expressPickupFee = parseFloat(process.env.EXPRESS_PICKUP_FEE) || 3.00;
 const expressFeeToday = parseFloat(process.env.EXPRESS_FEE_TODAY) || 3.00;
 const expressFeeTomorrow = parseFloat(process.env.EXPRESS_FEE_TOMORROW) || 1.00;
 
-const razorpayKeyId = process.env.RAZORPAY_KEY_ID || '';
-const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || '';
-const isMockPayment = !razorpayKeyId || !razorpayKeySecret || 
-  razorpayKeyId.toLowerCase().includes('mock') || 
-  razorpayKeyId.toLowerCase().includes('test');
+const razorpayKeyId = (process.env.RAZORPAY_KEY_ID || '').trim();
+const razorpayKeySecret = (process.env.RAZORPAY_KEY_SECRET || '').trim();
+const razorpayWebhookSecret = (process.env.RAZORPAY_WEBHOOK_SECRET || '').trim();
+
+function checkIsMockMode(keyId, keySecret) {
+  if (!keyId || !keySecret) return true;
+  if (keyId.startsWith('<') || keySecret.startsWith('<')) return true;
+  if (keyId.toLowerCase().includes('mock') || keyId === 'rzp_test_mock') return true;
+  return false;
+}
+
+const isMockPayment = checkIsMockMode(razorpayKeyId, razorpayKeySecret);
 
 const config = {
   env: nodeEnv,
@@ -74,10 +81,12 @@ const config = {
   razorpay: {
     keyId: razorpayKeyId,
     keySecret: razorpayKeySecret,
+    webhookSecret: razorpayWebhookSecret,
     isMockMode: isMockPayment
   },
   RAZORPAY_KEY_ID: razorpayKeyId,
   RAZORPAY_KEY_SECRET: razorpayKeySecret,
+  RAZORPAY_WEBHOOK_SECRET: razorpayWebhookSecret,
 
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 15 * 60 * 1000,

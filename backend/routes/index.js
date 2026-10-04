@@ -10,6 +10,7 @@ const authRoutes = require('./authRoutes');
 const menuRoutes = require('./menuRoutes');
 const slotRoutes = require('./slotRoutes');
 const orderRoutes = require('./orderRoutes');
+const paymentRoutes = require('./paymentRoutes');
 const adminRoutes = require('./adminRoutes');
 
 // API Health Check
@@ -26,6 +27,7 @@ router.use('/auth', authRoutes);
 router.use('/menu', menuRoutes);
 router.use('/slots', slotRoutes);
 router.use('/orders', orderRoutes);
+router.use('/payments', paymentRoutes);
 router.use('/admin', adminRoutes);
 
 module.exports = router;

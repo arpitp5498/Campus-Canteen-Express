@@ -236,9 +236,80 @@ function renderSlots(slots) {
     });
 }
 
-/* ───────── Place Order & Verify Payment ───────── */
+/* ───────── Payment Status & UI States ───────── */
+
+let isPaymentInProgress = false;
+let activePendingOrderId = null;
+
+function setPaymentStatus(type, message, showRetry = false, retryHandler = null) {
+    const container = document.getElementById('payment-status-container');
+    const alertBox = document.getElementById('payment-status-alert');
+    const messageEl = document.getElementById('payment-status-message');
+    const retryBtn = document.getElementById('retry-payment-btn');
+    const placeBtn = document.getElementById('place-order-btn');
+
+    if (!container || !alertBox || !messageEl) return;
+
+    if (type === 'reset') {
+        container.style.display = 'none';
+        if (placeBtn) {
+            placeBtn.style.display = 'block';
+            placeBtn.disabled = false;
+            placeBtn.innerHTML = '💳 Pay Now';
+        }
+        if (retryBtn) retryBtn.style.display = 'none';
+        isPaymentInProgress = false;
+        return;
+    }
+
+    container.style.display = 'block';
+    alertBox.className = 'alert';
+
+    if (type === 'loading' || type === 'processing') {
+        alertBox.classList.add('alert-info');
+        messageEl.innerHTML = `<span class="spinner-sm" style="display:inline-block; vertical-align:middle; margin-right:6px;"></span> ${escapeHtml(message)}`;
+        if (placeBtn) {
+            placeBtn.disabled = true;
+            placeBtn.innerHTML = '⏳ Processing...';
+        }
+        if (retryBtn) retryBtn.style.display = 'none';
+        isPaymentInProgress = true;
+    } else if (type === 'success') {
+        alertBox.classList.add('alert-success');
+        messageEl.innerHTML = `<strong>Success:</strong> ${escapeHtml(message)}`;
+        if (placeBtn) placeBtn.style.display = 'none';
+        if (retryBtn) retryBtn.style.display = 'none';
+        isPaymentInProgress = false;
+    } else if (type === 'error') {
+        alertBox.classList.add('alert-danger');
+        messageEl.innerHTML = `<strong>Payment Failed:</strong> ${escapeHtml(message)}`;
+        if (placeBtn) placeBtn.style.display = 'none';
+        if (retryBtn && showRetry) {
+            retryBtn.style.display = 'block';
+            retryBtn.disabled = false;
+            retryBtn.onclick = retryHandler;
+        }
+        isPaymentInProgress = false;
+    } else if (type === 'warning') {
+        alertBox.classList.add('alert-warning');
+        messageEl.innerHTML = `<strong>Notice:</strong> ${escapeHtml(message)}`;
+        if (placeBtn) placeBtn.style.display = 'none';
+        if (retryBtn && showRetry) {
+            retryBtn.style.display = 'block';
+            retryBtn.disabled = false;
+            retryBtn.onclick = retryHandler;
+        }
+        isPaymentInProgress = false;
+    }
+}
+
+/* ───────── Place Order & Razorpay Checkout ───────── */
 
 async function placeOrder() {
+    if (isPaymentInProgress) {
+        return; // Prevent duplicate clicks
+    }
+
     if (!selectedSlotId) {
         showToast('Please select a 10-minute pickup slot', 'error');
         return;
@@ -250,16 +321,9 @@ async function placeOrder() {
         return;
     }
 
-    const btn = document.getElementById('place-order-btn');
-    const originalText = btn ? btn.textContent : 'Pay & Confirm Order';
-
-    if (btn) {
-        btn.textContent = '⏳ Processing Order...';
-        btn.disabled = true;
-    }
+    setPaymentStatus('loading', 'Creating order & reserving pickup slot...');
 
     try {
-        // Pre-check: format items array for backend
         const items = cart.map(item => ({
             item_id: Number(item.item_id || item.id),
             quantity: Number(item.quantity || 1),
@@ -281,37 +345,183 @@ async function placeOrder() {
 
         const orderData = createRes.data?.order || createRes.data;
         const paymentData = createRes.data?.payment || createRes.payment || {};
-        const orderId = orderData.id;
+        activePendingOrderId = orderData.id;
 
-        // Auto-verify mock payment
-        const verifyRes = await apiFetch('/orders/verify-payment', {
-            method: 'POST',
-            body: JSON.stringify({
-                order_id: orderId,
-                razorpay_order_id: paymentData.razorpay_order_id || orderData.payment?.razorpay_order_id || 'mock_order_id',
-                razorpay_payment_id: 'pay_mock_' + Date.now(),
-                razorpay_signature: 'mock_signature'
-            })
-        });
-
-        if (!verifyRes || !verifyRes.success) {
-            throw new Error((verifyRes && verifyRes.message) || 'Payment verification failed');
+        // Cache pickup token in session storage for instant receipt rendering
+        if (orderData.pickup_token) {
+            try {
+                sessionStorage.setItem('cce_confirmed_token_' + orderData.id, orderData.pickup_token);
+            } catch (e) {}
         }
 
-        clearCart();
-        showToast('Order placed successfully! Redirecting...', 'success');
-
-        setTimeout(() => {
-            window.location.href = `/orders.html?confirmed=${orderId}`;
-        }, 600);
+        await openRazorpayCheckout(orderData, paymentData);
 
     } catch (error) {
         console.error('Order placement error:', error);
         showToast(error.message || 'Something went wrong while placing the order', 'error');
+        setPaymentStatus('reset');
+    }
+}
 
-        if (btn) {
-            btn.textContent = originalText;
-            btn.disabled = false;
+/**
+ * Handle Razorpay Checkout modal or Mock Mode execution.
+ */
+async function openRazorpayCheckout(orderData, paymentData) {
+    const user = getUser();
+    const orderId = orderData.id;
+
+    // 1. Mock Mode Fallback
+    if (paymentData.is_mock || !window.Razorpay) {
+        setPaymentStatus('processing', 'Authorizing Campus Express Payment...');
+        try {
+            const verifyRes = await apiFetch('/orders/verify-payment', {
+                method: 'POST',
+                body: JSON.stringify({
+                    order_id: orderId,
+                    razorpay_order_id: paymentData.razorpay_order_id || 'mock_order_id',
+                    razorpay_payment_id: 'pay_mock_' + Date.now(),
+                    razorpay_signature: 'mock_signature'
+                })
+            });
+
+            if (!verifyRes || !verifyRes.success) {
+                throw new Error((verifyRes && verifyRes.message) || 'Payment verification failed');
+            }
+
+            clearCart();
+            setPaymentStatus('success', 'Order placed & payment verified successfully! Redirecting...');
+            showToast('Order confirmed!', 'success');
+
+            setTimeout(() => {
+                window.location.href = `/orders.html?confirmed=${orderId}`;
+            }, 600);
+        } catch (err) {
+            setPaymentStatus('error', err.message || 'Payment verification failed', true, () => retryPayment(orderId));
         }
+        return;
+    }
+
+    // 2. Real Razorpay Test / Live Mode
+    setPaymentStatus('processing', 'Opening secure Razorpay Checkout modal...');
+
+    const options = {
+        key: paymentData.key_id,
+        amount: paymentData.amount, // In paise
+        currency: paymentData.currency || 'INR',
+        name: 'Campus Canteen Express',
+        description: `Pre-Order #${orderData.order_number || orderId} (${selectedOrderType})`,
+        order_id: paymentData.razorpay_order_id,
+        image: 'https://cdn-icons-png.flaticon.com/512/3075/3075977.png',
+        handler: async function (response) {
+            setPaymentStatus('processing', 'Verifying payment signature with banking gateway...');
+            try {
+                const verifyRes = await apiFetch('/orders/verify-payment', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        order_id: orderId,
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature
+                    })
+                });
+
+                if (!verifyRes || !verifyRes.success) {
+                    throw new Error((verifyRes && verifyRes.message) || 'Payment signature verification failed.');
+                }
+
+                clearCart();
+                setPaymentStatus('success', 'Payment verified! Generating express pickup receipt...');
+                showToast('Payment successful! Redirecting...', 'success');
+
+                setTimeout(() => {
+                    window.location.href = `/orders.html?confirmed=${orderId}`;
+                }, 600);
+            } catch (err) {
+                console.error('Signature verification error:', err);
+                setPaymentStatus('error', err.message || 'Payment verification failed.', true, () => retryPayment(orderId));
+            }
+        },
+        modal: {
+            ondismiss: function () {
+                console.warn('Payment window closed by user.');
+                setPaymentStatus(
+                    'warning',
+                    'Payment was cancelled. Your lunch slot is reserved for this order. You can complete payment below.',
+                    true,
+                    () => retryPayment(orderId)
+                );
+                apiFetch(`/orders/${orderId}/payment-failed`, {
+                    method: 'POST',
+                    body: JSON.stringify({ reason: 'User dismissed Razorpay checkout modal' })
+                }).catch(() => {});
+            }
+        },
+        prefill: {
+            name: user?.name || '',
+            email: user?.email || '',
+            contact: user?.phone || ''
+        },
+        notes: {
+            order_id: String(orderId),
+            order_type: selectedOrderType
+        },
+        theme: {
+            color: '#16A34A'
+        }
+    };
+
+    try {
+        const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+            console.error('Payment failed event:', response.error);
+            const errorDesc = response.error?.description || 'Transaction declined by bank.';
+            setPaymentStatus(
+                'error',
+                `${errorDesc} You can safely retry payment below.`,
+                true,
+                () => retryPayment(orderId)
+            );
+            apiFetch(`/orders/${orderId}/payment-failed`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    reason: errorDesc,
+                    razorpay_payment_id: response.error?.metadata?.payment_id
+                })
+            }).catch(() => {});
+        });
+        rzp.open();
+    } catch (err) {
+        console.error('Failed to open Razorpay modal:', err);
+        setPaymentStatus('error', 'Could not open Razorpay Checkout: ' + err.message, true, () => retryPayment(orderId));
+    }
+}
+
+/**
+ * Safely retry payment on an unpaid order without losing slot or creating duplicate orders.
+ */
+async function retryPayment(orderId) {
+    if (isPaymentInProgress) return;
+    setPaymentStatus('loading', 'Initiating payment retry...');
+
+    try {
+        const res = await apiFetch(`/orders/${orderId}/retry-payment`, {
+            method: 'POST'
+        });
+
+        if (!res || !res.success) {
+            throw new Error((res && res.message) || 'Failed to retry payment');
+        }
+
+        const retryData = res.data || {};
+        const paymentData = retryData.payment || {};
+        const orderData = {
+            id: retryData.order_id || orderId,
+            order_number: retryData.order_number
+        };
+
+        await openRazorpayCheckout(orderData, paymentData);
+    } catch (err) {
+        console.error('Retry payment error:', err);
+        setPaymentStatus('error', err.message || 'Retry failed. Please try again.', true, () => retryPayment(orderId));
     }
 }

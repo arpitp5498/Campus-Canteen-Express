@@ -1,6 +1,6 @@
 /**
  * Campus Canteen Express — Shared Navigation & Footer Components
- * Renders consistent header/footer across all pages.
+ * Renders modern, responsive, accessible header/footer across all pages.
  */
 
 /* ───────── Navigation ───────── */
@@ -11,33 +11,64 @@ function renderNavbar() {
   const admin = isAdmin();
   const currentPage = window.location.pathname.split('/').pop() || 'index.html';
 
+  // Remove any pre-existing navbar
+  const existingNav = document.querySelector('.navbar');
+  if (existingNav) existingNav.remove();
+
   const nav = document.createElement('nav');
   nav.className = 'navbar';
   nav.setAttribute('role', 'navigation');
-  nav.setAttribute('aria-label', 'Main navigation');
+  nav.setAttribute('aria-label', 'Main campus navigation');
+
+  const firstName = user?.name ? escapeHtml(user.name.split(' ')[0]) : 'Student';
+  const userInitial = firstName.charAt(0).toUpperCase();
 
   nav.innerHTML = `
     <div class="container">
       <a href="/index.html" class="navbar-brand" aria-label="Campus Canteen Express - Home">
-        🍽️ <span>Campus</span>Canteen
+        <div class="brand-icon-box">🍽️</div>
+        <span>Campus</span> Canteen
       </a>
 
       <div class="navbar-nav" id="navMenu">
-        <a href="/index.html" class="${currentPage === 'index.html' ? 'active' : ''}">Home</a>
-        <a href="/menu.html" class="${currentPage === 'menu.html' ? 'active' : ''}">Menu</a>
-        ${loggedIn ? `<a href="/cart.html" class="${currentPage === 'cart.html' ? 'active' : ''}">Cart <span class="cart-count" style="display:none;background:var(--primary);color:white;border-radius:50%;width:18px;height:18px;font-size:11px;display:inline-flex;align-items:center;justify-content:center;margin-left:4px;">0</span></a>` : ''}
-        ${loggedIn ? `<a href="/orders.html" class="${currentPage === 'orders.html' ? 'active' : ''}">My Orders</a>` : ''}
-        ${admin ? `<a href="/admin.html" class="${currentPage === 'admin.html' ? 'active' : ''}">Admin</a>` : ''}
+        <a href="/index.html" class="${currentPage === 'index.html' || currentPage === '' ? 'active' : ''}">
+          🏠 Home
+        </a>
+        <a href="/menu.html" class="${currentPage === 'menu.html' ? 'active' : ''}">
+          📋 Express Menu
+        </a>
+        ${loggedIn ? `
+          <a href="/cart.html" class="${currentPage === 'cart.html' ? 'active' : ''}">
+            🛒 Cart <span class="cart-nav-badge cart-count" style="display:none;">0</span>
+          </a>
+          <a href="/orders.html" class="${currentPage === 'orders.html' ? 'active' : ''}">
+            📦 My Orders
+          </a>
+        ` : ''}
+        ${admin ? `
+          <a href="/admin.html" class="${currentPage === 'admin.html' ? 'active' : ''}">
+            🛡️ Canteen Staff
+          </a>
+        ` : ''}
       </div>
 
       <div class="nav-actions">
         ${loggedIn
-          ? `<span class="text-sm text-muted user-greeting" style="margin-right:6px;">Hi, ${escapeHtml(user?.name?.split(' ')[0] || 'User')}</span>
-             <button class="btn btn-outline btn-sm" onclick="logout()" aria-label="Log out">Logout</button>`
-          : `<a href="/login.html" class="btn btn-outline btn-sm">Login</a>
-             <a href="/register.html" class="btn btn-primary btn-sm">Sign Up</a>`
+          ? `
+            <div class="user-pill user-greeting">
+              <span class="user-pill-avatar">${userInitial}</span>
+              <span>${firstName}</span>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="logout()" aria-label="Log out of account">
+              Logout
+            </button>
+          `
+          : `
+            <a href="/login.html" class="btn btn-outline btn-sm">Login</a>
+            <a href="/register.html" class="btn btn-primary btn-sm">Sign Up</a>
+          `
         }
-        <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Toggle menu" aria-expanded="false">
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Toggle navigation drawer" aria-expanded="false">
           ☰
         </button>
       </div>
@@ -46,14 +77,14 @@ function renderNavbar() {
 
   document.body.prepend(nav);
 
-  // Update cart count after navbar renders
+  // Update live cart item count
   setTimeout(updateCartCount, 0);
 }
 
 function toggleMobileMenu() {
   const menu = document.getElementById('navMenu');
   const btn = document.querySelector('.mobile-menu-btn');
-  if (menu) {
+  if (menu && btn) {
     menu.classList.toggle('open');
     const isOpen = menu.classList.contains('open');
     btn.setAttribute('aria-expanded', isOpen);
@@ -61,9 +92,25 @@ function toggleMobileMenu() {
   }
 }
 
+// Close mobile menu on outside click or resize
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('navMenu');
+  const btn = document.querySelector('.mobile-menu-btn');
+  if (menu && menu.classList.contains('open') && !menu.contains(e.target) && !btn.contains(e.target)) {
+    menu.classList.remove('open');
+    if (btn) {
+      btn.setAttribute('aria-expanded', 'false');
+      btn.textContent = '☰';
+    }
+  }
+});
+
 /* ───────── Footer ───────── */
 
 function renderFooter() {
+  const existingFooter = document.querySelector('.footer');
+  if (existingFooter) existingFooter.remove();
+
   const footer = document.createElement('footer');
   footer.className = 'footer';
   footer.setAttribute('role', 'contentinfo');
@@ -72,42 +119,48 @@ function renderFooter() {
     <div class="container">
       <div class="footer-grid">
         <div>
-          <div class="footer-brand">🍽️ <span>Campus</span>Canteen Express</div>
+          <div class="footer-brand">
+            <span>🍽️ Campus</span> Canteen Express
+          </div>
           <p class="footer-desc">
-            Skip the queue and enjoy your break. Pre-order food from your campus canteen,
-            choose a pickup time, and collect it instantly from the Express Counter.
+            Skip the lunchtime queue and maximize your break. Pre-order fresh campus meals,
+            pick a guaranteed 10-minute Express Slot, and collect seamlessly using your private token.
           </p>
+          <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.06); padding: 6px 12px; border-radius: 6px; font-size: 0.775rem; color: #86EFAC;">
+            ⚡ Express Window: 12:00 PM – 1:00 PM (Today & Tomorrow)
+          </div>
         </div>
         <div>
-          <h4>Quick Links</h4>
+          <h4>Campus Quick Links</h4>
           <div class="footer-links">
             <a href="/index.html">Home</a>
-            <a href="/menu.html">Menu</a>
-            <a href="/cart.html">Cart</a>
+            <a href="/menu.html">Express Menu</a>
+            <a href="/cart.html">View Cart</a>
             <a href="/orders.html">My Orders</a>
           </div>
         </div>
         <div>
-          <h4>Support</h4>
+          <h4>Express Service</h4>
           <div class="footer-links">
-            <a href="#">Help Center</a>
-            <a href="#">Contact Us</a>
-            <a href="#">FAQs</a>
-            <a href="#">Feedback</a>
+            <a href="/menu.html">Today's Lunch (₹3 fee)</a>
+            <a href="/menu.html">Tomorrow Pre-order (₹1 fee)</a>
+            <a href="/index.html#how-it-works">How Token Pickup Works</a>
+            <a href="/login.html">Canteen Staff Portal</a>
           </div>
         </div>
         <div>
-          <h4>Legal</h4>
+          <h4>Student Support</h4>
           <div class="footer-links">
-            <a href="#">Terms of Service</a>
+            <a href="#">Canteen Counter Help</a>
+            <a href="#">Order Issues & Refunds</a>
+            <a href="#">Terms & Conditions</a>
             <a href="#">Privacy Policy</a>
-            <a href="#">Refund Policy</a>
           </div>
         </div>
       </div>
       <div class="footer-bottom">
-        <span>&copy; ${new Date().getFullYear()} Campus Canteen Express. All rights reserved.</span>
-        <span>Made with 💚 for campus life</span>
+        <span>&copy; ${new Date().getFullYear()} Campus Canteen Express. Powered by MySQL 8.0 & Express.</span>
+        <span>Crafted for college students & canteen staff 💚</span>
       </div>
     </div>
   `;
@@ -122,5 +175,5 @@ function initPageShell() {
   renderFooter();
 }
 
-// Auto-init when DOM is ready
+// Auto-initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', initPageShell);

@@ -97,9 +97,46 @@ async function cancelOrder(req, res, next) {
   }
 }
 
+/**
+ * POST /api/orders/:id/retry-payment
+ * Generate a fresh Razorpay order descriptor to safely retry payment for an unpaid order.
+ */
+async function retryPayment(req, res, next) {
+  try {
+    const orderId = req.params.id || req.body.order_id;
+    const userId = req.user.id;
+
+    const result = await orderService.retryPayment(orderId, userId);
+
+    return successResponse(res, result, 'Payment retry descriptor created successfully', 200);
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * POST /api/orders/:id/payment-failed
+ * Record failed or cancelled payment attempt.
+ */
+async function recordPaymentFailure(req, res, next) {
+  try {
+    const orderId = req.params.id || req.body.order_id;
+    const userId = req.user.id;
+    const { reason, razorpay_payment_id } = req.body || {};
+
+    const result = await orderService.recordPaymentFailure(orderId, userId, reason, razorpay_payment_id);
+
+    return successResponse(res, result, 'Payment failure recorded', 200);
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createOrder,
   verifyPayment,
+  retryPayment,
+  recordPaymentFailure,
   getMyOrders,
   getOrderById,
   cancelOrder
