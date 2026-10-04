@@ -255,9 +255,17 @@ function setPaymentStatus(type, message, showRetry = false, retryHandler = null)
     const alertBox = document.getElementById('payment-status-alert');
     const messageEl = document.getElementById('payment-status-message');
     const retryBtn = document.getElementById('retry-payment-btn');
+    const switchCashBtn = document.getElementById('switch-cash-btn');
+    const simulateSuccessBtn = document.getElementById('simulate-success-btn');
     const placeBtn = document.getElementById('place-order-btn');
 
     if (!container || !alertBox || !messageEl) return;
+
+    const hideActionButtons = () => {
+        if (retryBtn) retryBtn.style.display = 'none';
+        if (switchCashBtn) switchCashBtn.style.display = 'none';
+        if (simulateSuccessBtn) simulateSuccessBtn.style.display = 'none';
+    };
 
     if (type === 'reset') {
         container.style.display = 'none';
@@ -266,7 +274,7 @@ function setPaymentStatus(type, message, showRetry = false, retryHandler = null)
             placeBtn.disabled = false;
             placeBtn.innerHTML = '💳 Pay Now';
         }
-        if (retryBtn) retryBtn.style.display = 'none';
+        hideActionButtons();
         isPaymentInProgress = false;
         return;
     }
@@ -281,32 +289,65 @@ function setPaymentStatus(type, message, showRetry = false, retryHandler = null)
             placeBtn.disabled = true;
             placeBtn.innerHTML = '⏳ Processing...';
         }
-        if (retryBtn) retryBtn.style.display = 'none';
+        hideActionButtons();
         isPaymentInProgress = true;
     } else if (type === 'success') {
         alertBox.classList.add('alert-success');
         messageEl.innerHTML = `<strong>Success:</strong> ${escapeHtml(message)}`;
         if (placeBtn) placeBtn.style.display = 'none';
-        if (retryBtn) retryBtn.style.display = 'none';
+        hideActionButtons();
         isPaymentInProgress = false;
-    } else if (type === 'error') {
-        alertBox.classList.add('alert-danger');
-        messageEl.innerHTML = `<strong>Payment Failed:</strong> ${escapeHtml(message)}`;
+    } else if (type === 'error' || type === 'warning') {
+        alertBox.classList.add(type === 'error' ? 'alert-danger' : 'alert-warning');
+        messageEl.innerHTML = `<strong>${type === 'error' ? 'Payment Failed:' : 'Notice:'}</strong> ${escapeHtml(message)}`;
         if (placeBtn) placeBtn.style.display = 'none';
-        if (retryBtn && showRetry) {
-            retryBtn.style.display = 'block';
-            retryBtn.disabled = false;
-            retryBtn.onclick = retryHandler;
-        }
-        isPaymentInProgress = false;
-    } else if (type === 'warning') {
-        alertBox.classList.add('alert-warning');
-        messageEl.innerHTML = `<strong>Notice:</strong> ${escapeHtml(message)}`;
-        if (placeBtn) placeBtn.style.display = 'none';
-        if (retryBtn && showRetry) {
-            retryBtn.style.display = 'block';
-            retryBtn.disabled = false;
-            retryBtn.onclick = retryHandler;
+        
+        if (showRetry) {
+            if (retryBtn) {
+                retryBtn.style.display = 'block';
+                retryBtn.disabled = false;
+                retryBtn.onclick = retryHandler;
+            }
+
+            if (switchCashBtn && activePendingOrderId) {
+                switchCashBtn.style.display = 'block';
+                switchCashBtn.onclick = async () => {
+                    try {
+                        setPaymentStatus('processing', 'Switching order to Cash on Counter...');
+                        const res = await apiFetch(`/orders/${activePendingOrderId}/switch-to-cash`, { method: 'POST' });
+                        if (!res || !res.success) throw new Error(res?.message || 'Failed to switch to cash');
+                        clearCart();
+                        setPaymentStatus('success', 'Switched to Cash on Counter! Redirecting...');
+                        showToast('Order confirmed! Pay cash at pickup.', 'success');
+                        setTimeout(() => {
+                            window.location.href = `/orders.html?confirmed=${activePendingOrderId}`;
+                        }, 600);
+                    } catch (e) {
+                        setPaymentStatus('error', e.message || 'Could not switch to cash', true, retryHandler);
+                    }
+                };
+            }
+
+            if (simulateSuccessBtn && activePendingOrderId) {
+                simulateSuccessBtn.style.display = 'block';
+                simulateSuccessBtn.onclick = async () => {
+                    try {
+                        setPaymentStatus('processing', 'Simulating sandbox test authorization...');
+                        const res = await apiFetch(`/orders/${activePendingOrderId}/simulate-test-payment`, { method: 'POST' });
+                        if (!res || !res.success) throw new Error(res?.message || 'Failed test authorization');
+                        clearCart();
+                        setPaymentStatus('success', 'Test payment authorized! Redirecting...');
+                        showToast('Test payment successful!', 'success');
+                        setTimeout(() => {
+                            window.location.href = `/orders.html?confirmed=${activePendingOrderId}`;
+                        }, 600);
+                    } catch (e) {
+                        setPaymentStatus('error', e.message || 'Simulation failed', true, retryHandler);
+                    }
+                };
+            }
+        } else {
+            hideActionButtons();
         }
         isPaymentInProgress = false;
     }

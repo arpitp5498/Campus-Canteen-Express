@@ -15,6 +15,8 @@ router.post('/', verifyToken, orderLimiter, validateCreateOrder, orderController
 router.post('/verify-payment', verifyToken, validateVerifyPayment, orderController.verifyPayment);
 router.post('/:id/retry-payment', verifyToken, orderController.retryPayment);
 router.post('/:id/payment-failed', verifyToken, orderController.recordPaymentFailure);
+router.post('/:id/switch-to-cash', verifyToken, orderController.switchToCash);
+router.post('/:id/simulate-test-payment', verifyToken, orderController.simulateTestPayment);
 router.get('/my-orders', verifyToken, orderController.getMyOrders);
 router.get('/:id', verifyToken, orderController.getOrderById);
 router.post('/:id/cancel', verifyToken, orderController.cancelOrder);

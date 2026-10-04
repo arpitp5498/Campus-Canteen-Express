@@ -816,11 +816,91 @@ async function getAdminAnalytics(targetDate = null) {
   };
 }
 
+/**
+ * Switch an unpaid order to Cash on Counter.
+ */
+async function switchToCash(userId, orderId) {
+  const parsedId = Number(orderId);
+  if (!parsedId || isNaN(parsedId)) {
+    throw new ValidationError('A valid order ID is required.');
+  }
+
+  return await db.transaction(async (tx) => {
+    const order = await tx.get('SELECT * FROM orders WHERE id = ? AND user_id = ?', [parsedId, userId]);
+    if (!order) {
+      throw new AppError('Order not found or does not belong to you.', 404, 'ORDER_NOT_FOUND');
+    }
+
+    const payment = await tx.get('SELECT * FROM payments WHERE order_id = ?', [parsedId]);
+    if (payment && payment.status === 'SUCCESS') {
+      throw new AppError('Order is already paid.', 400, 'ALREADY_PAID');
+    }
+
+    await tx.run(
+      `UPDATE payments 
+       SET payment_method = 'CASH', status = 'PENDING', updated_at = CURRENT_TIMESTAMP 
+       WHERE order_id = ?`,
+      [parsedId]
+    );
+
+    return {
+      order_id: parsedId,
+      status: 'PENDING',
+      payment_method: 'CASH',
+      message: 'Order successfully switched to Cash on Counter.'
+    };
+  });
+}
+
+/**
+ * Instant simulated authorization for sandbox testing environments.
+ */
+async function simulateTestPayment(userId, orderId) {
+  const parsedId = Number(orderId);
+  if (!parsedId || isNaN(parsedId)) {
+    throw new ValidationError('A valid order ID is required.');
+  }
+
+  const keyId = (config.razorpay?.keyId || process.env.RAZORPAY_KEY_ID || '').trim();
+  if (!keyId.startsWith('rzp_test_') && !paymentService.isMockMode()) {
+    throw new AppError('Test payment simulation is only permitted in Test/Sandbox Mode.', 403, 'FORBIDDEN');
+  }
+
+  return await db.transaction(async (tx) => {
+    const order = await tx.get('SELECT * FROM orders WHERE id = ? AND user_id = ?', [parsedId, userId]);
+    if (!order) {
+      throw new AppError('Order not found or does not belong to you.', 404, 'ORDER_NOT_FOUND');
+    }
+
+    const payment = await tx.get('SELECT * FROM payments WHERE order_id = ?', [parsedId]);
+    if (payment && payment.status === 'SUCCESS') {
+      return { already_verified: true, order_id: parsedId, status: 'SUCCESS' };
+    }
+
+    const simPaymentId = `pay_sim_${Date.now()}`;
+    await tx.run(
+      `UPDATE payments 
+       SET status = 'SUCCESS', razorpay_payment_id = ?, updated_at = CURRENT_TIMESTAMP 
+       WHERE order_id = ?`,
+      [simPaymentId, parsedId]
+    );
+
+    return {
+      order_id: parsedId,
+      status: 'SUCCESS',
+      razorpay_payment_id: simPaymentId,
+      message: 'Test payment simulated successfully.'
+    };
+  });
+}
+
 module.exports = {
   createOrder,
   verifyPayment,
   recordPaymentFailure,
   retryPayment: paymentService.retryPaymentOrder,
+  switchToCash,
+  simulateTestPayment,
   getUserOrders,
   getOrderById,
   cancelOrder,

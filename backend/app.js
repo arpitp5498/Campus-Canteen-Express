@@ -16,11 +16,13 @@ const { errorResponse } = require('./utils/response');
 
 const app = express();
 
-// 1. Security HTTP Headers (Helmet)
+// 1. Security HTTP Headers (Helmet configured for Payment Gateway popups)
 app.use(
   helmet({
     contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+    crossOriginResourcePolicy: false
   })
 );
 

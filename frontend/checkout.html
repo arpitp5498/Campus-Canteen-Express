@@ -348,9 +348,15 @@
                         <div id="payment-status-alert" class="alert" style="margin-bottom: 0.75rem; font-size: 0.9rem; line-height: 1.4;">
                             <div id="payment-status-message"></div>
                         </div>
-                        <div id="payment-status-actions" style="display: flex; gap: 0.5rem;">
+                        <div id="payment-status-actions" style="display: flex; flex-direction: column; gap: 0.5rem;">
                             <button type="button" id="retry-payment-btn" class="btn btn-primary btn-block" style="display: none; padding: 0.85rem; font-weight: 800;">
-                                🔄 Retry Payment
+                                🔄 Retry Razorpay
+                            </button>
+                            <button type="button" id="switch-cash-btn" class="btn btn-block" style="display: none; padding: 0.85rem; font-weight: 800; background: #FEF3C7; color: #92400E; border: 1.5px solid #F59E0B;">
+                                💵 Switch to Cash on Counter (Instant Confirm)
+                            </button>
+                            <button type="button" id="simulate-success-btn" class="btn btn-block" style="display: none; padding: 0.75rem; font-weight: 700; background: #F1F5F9; color: var(--slate-700); border: 1px solid var(--slate-300);">
+                                ⚡ Instant Sandbox Authorize (Bypass Popups)
                             </button>
                         </div>
                     </div>

@@ -132,11 +132,47 @@ async function recordPaymentFailure(req, res, next) {
   }
 }
 
+/**
+ * POST /api/orders/:id/switch-to-cash
+ * Convert an unpaid or failed online payment order to Cash on Counter.
+ */
+async function switchToCash(req, res, next) {
+  try {
+    const orderId = req.params.id || req.body.order_id;
+    const userId = req.user.id;
+
+    const result = await orderService.switchToCash(userId, orderId);
+
+    return successResponse(res, result, 'Order switched to Cash on Counter', 200);
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * POST /api/orders/:id/simulate-test-payment
+ * Instant simulation authorization for sandbox test environment.
+ */
+async function simulateTestPayment(req, res, next) {
+  try {
+    const orderId = req.params.id || req.body.order_id;
+    const userId = req.user.id;
+
+    const result = await orderService.simulateTestPayment(userId, orderId);
+
+    return successResponse(res, result, 'Sandbox test payment authorized', 200);
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createOrder,
   verifyPayment,
   retryPayment,
   recordPaymentFailure,
+  switchToCash,
+  simulateTestPayment,
   getMyOrders,
   getOrderById,
   cancelOrder
