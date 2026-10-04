@@ -415,6 +415,15 @@ async function verifyPickupToken() {
                     <div style="font-size: 0.95rem; font-weight: 700; color: var(--text);">
                         Order #${order.order_number || String(order.id).substring(0, 8)} &bull; ${escapeHtml(order.user?.name || 'Student')}
                     </div>
+                    ${order.payment?.payment_method === 'CASH' && order.payment?.status !== 'SUCCESS' ? `
+                        <div style="margin-top: 0.65rem; background: #FEF3C7; border: 1.5px solid #F59E0B; border-radius: var(--radius-sm); padding: 0.6rem 0.85rem; color: #92400E; font-weight: 800; font-size: 0.95rem;">
+                            💵 COLLECT CASH AT COUNTER: ₹${parseFloat(order.total_amount || 0).toFixed(2)}
+                        </div>
+                    ` : `
+                        <div style="margin-top: 0.5rem; color: #15803D; font-weight: 700; font-size: 0.85rem;">
+                            ✅ Paid Online (₹${parseFloat(order.total_amount || 0).toFixed(2)})
+                        </div>
+                    `}
                     <ul style="margin: 0.75rem 0 0 1.25rem; font-size: 0.9rem; line-height: 1.6;">
                         ${itemsList}
                     </ul>

@@ -116,7 +116,7 @@ function formatOrder(orderRow, items = [], slotRow = null, paymentRow = null, in
  * @param {Object} payload - { slot_id, items: [{ item_id, quantity, variant_id }], order_type }
  * @returns {Promise<{ order: Object, payment: Object }>}
  */
-async function createOrder(userId, { slot_id, items, order_type = 'TODAY' }) {
+async function createOrder(userId, { slot_id, items, order_type = 'TODAY', payment_method = 'RAZORPAY' }) {
   const targetSlotId = Number(slot_id);
   if (!targetSlotId || isNaN(targetSlotId) || targetSlotId <= 0) {
     throw new ValidationError('A valid pickup slot ID is required.');
@@ -261,19 +261,39 @@ async function createOrder(userId, { slot_id, items, order_type = 'TODAY' }) {
       );
     }
 
-    // 6. Create Mock/Razorpay Payment Descriptor
-    const paymentDescriptor = await paymentService.createPaymentOrder({
-      id: orderId,
-      order_number: orderNumber,
-      total_amount: totalAmount,
-      user_id: userId
-    });
+    // 6. Create Payment Descriptor (CASH or Razorpay / Mock)
+    const isCash = (payment_method || '').toUpperCase() === 'CASH';
+    let paymentDescriptor;
 
-    await tx.run(
-      `INSERT INTO payments (order_id, user_id, amount, currency, payment_method, razorpay_order_id, status)
-       VALUES (?, ?, ?, 'INR', ?, ?, 'PENDING')`,
-      [orderId, userId, totalAmount, paymentDescriptor.payment_mode, paymentDescriptor.razorpay_order_id]
-    );
+    if (isCash) {
+      paymentDescriptor = {
+        is_mock: false,
+        is_cash: true,
+        payment_mode: 'CASH',
+        razorpay_order_id: `cash_${orderId}_${Date.now()}`,
+        amount: Math.round(totalAmount * 100),
+        currency: 'INR'
+      };
+
+      await tx.run(
+        `INSERT INTO payments (order_id, user_id, amount, currency, payment_method, razorpay_order_id, status)
+         VALUES (?, ?, ?, 'INR', 'CASH', ?, 'PENDING')`,
+        [orderId, userId, totalAmount, paymentDescriptor.razorpay_order_id]
+      );
+    } else {
+      paymentDescriptor = await paymentService.createPaymentOrder({
+        id: orderId,
+        order_number: orderNumber,
+        total_amount: totalAmount,
+        user_id: userId
+      });
+
+      await tx.run(
+        `INSERT INTO payments (order_id, user_id, amount, currency, payment_method, razorpay_order_id, status)
+         VALUES (?, ?, ?, 'INR', ?, ?, 'PENDING')`,
+        [orderId, userId, totalAmount, paymentDescriptor.payment_mode, paymentDescriptor.razorpay_order_id]
+      );
+    }
 
     const createdOrderRow = await tx.get('SELECT * FROM orders WHERE id = ?', [orderId]);
     const createdItems = await tx.query('SELECT * FROM order_items WHERE order_id = ?', [orderId]);
@@ -565,6 +585,13 @@ async function advanceOrderStatus(orderId, targetStatus) {
       readyAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
     } else if (normalizedTarget === 'COLLECTED') {
       collectedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
+      // Auto-mark cash payment as SUCCESS upon collection
+      await tx.run(
+        `UPDATE payments 
+         SET status = 'SUCCESS', updated_at = CURRENT_TIMESTAMP 
+         WHERE order_id = ? AND payment_method = 'CASH' AND status = 'PENDING'`,
+        [id]
+      );
     } else if (normalizedTarget === 'CANCELLED') {
       cancelledAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
       // Release slot capacity on cancellation

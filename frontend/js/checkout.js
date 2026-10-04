@@ -82,11 +82,20 @@ function initDaySelector() {
 /* ───────── Payment Method Selector ───────── */
 
 function initPaymentSelector() {
+    const placeBtn = document.getElementById('place-order-btn');
     document.querySelectorAll('.payment-card').forEach(card => {
         card.addEventListener('click', () => {
             document.querySelectorAll('.payment-card').forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
             selectedPaymentMethod = card.getAttribute('data-method') || 'upi';
+
+            if (placeBtn && !isPaymentInProgress) {
+                if (selectedPaymentMethod === 'cash') {
+                    placeBtn.innerHTML = '💵 Confirm Order (Pay Cash on Counter)';
+                } else {
+                    placeBtn.innerHTML = '💳 Pay Now';
+                }
+            }
         });
     });
 }
@@ -330,12 +339,15 @@ async function placeOrder() {
             variant_id: item.variant_id ? Number(item.variant_id) : undefined
         }));
 
+        const isCash = selectedPaymentMethod === 'cash';
+
         const createRes = await apiFetch('/orders', {
             method: 'POST',
             body: JSON.stringify({
                 slot_id: selectedSlotId,
                 items: items,
-                order_type: selectedOrderType
+                order_type: selectedOrderType,
+                payment_method: isCash ? 'CASH' : 'RAZORPAY'
             })
         });
 
@@ -352,6 +364,18 @@ async function placeOrder() {
             try {
                 sessionStorage.setItem('cce_confirmed_token_' + orderData.id, orderData.pickup_token);
             } catch (e) {}
+        }
+
+        // If Cash on Counter, directly confirm and redirect to receipt!
+        if (isCash || paymentData.is_cash) {
+            clearCart();
+            setPaymentStatus('success', 'Order confirmed! Please pay cash at the Express Counter when collecting lunch.');
+            showToast('Order confirmed! Pay cash at pickup.', 'success');
+
+            setTimeout(() => {
+                window.location.href = `/orders.html?confirmed=${orderData.id}`;
+            }, 600);
+            return;
         }
 
         await openRazorpayCheckout(orderData, paymentData);

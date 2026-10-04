@@ -13,9 +13,9 @@ const { successResponse } = require('../utils/response');
 async function createOrder(req, res, next) {
   try {
     const userId = req.user.id;
-    const { slot_id, pickup_slot_id, items, order_type } = req.body;
+    const { slot_id, pickup_slot_id, items, order_type, payment_method } = req.body;
 
-    const result = await orderService.createOrder(userId, { slot_id, pickup_slot_id, items, order_type });
+    const result = await orderService.createOrder(userId, { slot_id, pickup_slot_id, items, order_type, payment_method });
 
     return successResponse(res, result, 'Order placed successfully', 201);
   } catch (error) {

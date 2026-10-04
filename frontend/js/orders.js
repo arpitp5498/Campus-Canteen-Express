@@ -331,8 +331,9 @@ function createOrderCard(order) {
 
         <div class="order-footer-bar">
             <div>
-                <span style="font-size: 0.875rem; color: var(--slate-500);">Total Paid: </span>
+                <span style="font-size: 0.875rem; color: var(--slate-500);">${order.payment?.payment_method === 'CASH' && order.payment?.status !== 'SUCCESS' ? 'Pay at Counter: ' : 'Total: '}</span>
                 <span style="font-size: 1.3rem; font-weight: 900; color: var(--slate-900);">₹${parseFloat(order.total_amount || 0).toFixed(2)}</span>
+                ${order.payment?.payment_method === 'CASH' ? `<span class="badge" style="margin-left: 0.5rem; background: #FEF3C7; color: #92400E; font-weight: 700; font-size: 0.78rem;">💵 Cash on Pickup</span>` : `<span class="badge" style="margin-left: 0.5rem; background: #DCFCE7; color: #166534; font-weight: 700; font-size: 0.78rem;">💳 Online Paid</span>`}
             </div>
             <div class="order-actions-group">
                 ${cancelBtn}

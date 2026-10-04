@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS payments (
     user_id INT NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     currency VARCHAR(10) NOT NULL DEFAULT 'INR',
-    payment_method ENUM('MOCK', 'RAZORPAY', 'UPI', 'CARD', 'NETBANKING') NOT NULL DEFAULT 'MOCK',
+    payment_method ENUM('MOCK', 'RAZORPAY', 'UPI', 'CARD', 'NETBANKING', 'CASH') NOT NULL DEFAULT 'MOCK',
     razorpay_order_id VARCHAR(100),
     razorpay_payment_id VARCHAR(100),
     razorpay_signature VARCHAR(255),
