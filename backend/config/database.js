@@ -7,8 +7,12 @@
  * parameterized query execution, and connection pooling.
  */
 
+const fs = require('fs');
+const { spawn } = require('child_process');
 const mysql = require('mysql2/promise');
 const config = require('./index');
+
+let lastPingError = null;
 
 // 1. Initialize MySQL Connection Pool
 const isDev = config.isDevelopment;
@@ -170,16 +174,69 @@ async function close() {
 }
 
 /**
+ * Attempt to auto-start local MySQL daemon if stopped on development machines.
+ */
+async function tryStartLocalMysql() {
+  const defaultMysqlExe = 'C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\mysqld.exe';
+  const defaultDataDir = process.env.MYSQL_DATADIR || 'C:\\Users\\arpit\\mysql_data';
+
+  if (!fs.existsSync(defaultMysqlExe) || !fs.existsSync(defaultDataDir)) {
+    return false;
+  }
+
+  try {
+    const child = spawn(defaultMysqlExe, [
+      `--datadir=${defaultDataDir}`,
+      `--port=${config.db.port || 3306}`,
+      '--console'
+    ], {
+      detached: true,
+      stdio: 'ignore'
+    });
+    child.unref();
+
+    // Poll up to 6 seconds for connection
+    for (let i = 0; i < 12; i++) {
+      await new Promise(res => setTimeout(res, 500));
+      try {
+        const [rows] = await pool.query('SELECT 1 as alive');
+        if (rows && rows[0] && rows[0].alive === 1) {
+          lastPingError = null;
+          if (isDev) console.log(`[DB] Successfully auto-started local MySQL server daemon on port ${config.db.port || 3306}`);
+          return true;
+        }
+      } catch {}
+    }
+  } catch (err) {
+    if (isDev) console.error('[DB] Local MySQL auto-launch attempt failed:', err.message);
+  }
+  return false;
+}
+
+/**
  * Check connection health / ping.
  * @returns {Promise<boolean>}
  */
 async function ping() {
   try {
     const [rows] = await pool.query('SELECT 1 as alive');
+    lastPingError = null;
     return Boolean(rows && rows[0] && rows[0].alive === 1);
-  } catch {
+  } catch (err) {
+    lastPingError = err;
+    if (err.code === 'ECONNREFUSED' && (config.db.host === 'localhost' || config.db.host === '127.0.0.1')) {
+      const recovered = await tryStartLocalMysql();
+      if (recovered) return true;
+    }
     return false;
   }
+}
+
+/**
+ * Get last error that caused ping() to fail.
+ */
+function getLastPingError() {
+  return lastPingError;
 }
 
 /**
@@ -217,6 +274,7 @@ module.exports = {
   prepare,
   close,
   ping,
+  getLastPingError,
   pool,
   dbPath: `mysql://${config.db.user}@${config.db.host}:${config.db.port}/${config.db.database}`
 };

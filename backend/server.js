@@ -14,7 +14,20 @@ async function startServer() {
   // 1. Verify Database Health
   const isDbAlive = await db.ping();
   if (!isDbAlive) {
+    const err = db.getLastPingError();
     logger.error('CRITICAL: Database connection check failed on startup.');
+    if (err) {
+      if (err.code === 'ECONNREFUSED') {
+        logger.error(`Could not connect to MySQL server at ${config.db.host}:${config.db.port} (Connection Refused).`);
+        logger.error(`Please verify that MySQL is running. You can start it with: npm run db:start`);
+      } else if (err.code === 'ER_ACCESS_DENIED_ERROR') {
+        logger.error(`MySQL authentication failed for user '${config.db.user}'. Please check DB_USER and DB_PASSWORD in .env.`);
+      } else if (err.code === 'ER_BAD_DB_ERROR') {
+        logger.error(`Database '${config.db.database}' does not exist on MySQL server.`);
+      } else {
+        logger.error(`MySQL Error [${err.code || 'UNKNOWN'}]: ${err.message}`);
+      }
+    }
     process.exit(1);
   }
   logger.info(`Database connected and healthy at: ${db.dbPath}`);
