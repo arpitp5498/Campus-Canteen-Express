@@ -187,11 +187,11 @@ async function tryStartLocalMysql() {
   try {
     const child = spawn(defaultMysqlExe, [
       `--datadir=${defaultDataDir}`,
-      `--port=${config.db.port || 3306}`,
-      '--console'
+      `--port=${config.db.port || 3306}`
     ], {
       detached: true,
-      stdio: 'ignore'
+      stdio: 'ignore',
+      windowsHide: true
     });
     child.unref();
 
