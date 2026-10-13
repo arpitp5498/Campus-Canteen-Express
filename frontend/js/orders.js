@@ -210,12 +210,13 @@ function createOrderCard(order) {
         const steps = ['PLACED', 'ACCEPTED', 'PREPARING', 'READY', 'COLLECTED'];
         const labels = ['Placed', 'Accepted', 'Preparing', 'Ready', 'Collected'];
         const currentIndex = steps.indexOf(status);
+        const isCollected = status === 'COLLECTED';
 
-        timelineHtml = '<div class="status-timeline">';
+        timelineHtml = `<div class="status-timeline ${isCollected ? 'all-completed' : ''}">`;
         steps.forEach((step, idx) => {
             let stepClass = '';
             let dotContent = idx + 1;
-            if (idx < currentIndex) {
+            if (idx < currentIndex || (isCollected && idx === currentIndex)) {
                 stepClass = 'completed';
                 dotContent = '✓';
             } else if (idx === currentIndex) {

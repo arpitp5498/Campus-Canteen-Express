@@ -1149,11 +1149,15 @@ select.form-input {
   content: '';
   position: absolute;
   top: 15px;
-  left: 24px;
-  right: 24px;
+  left: 10%;
+  right: 10%;
   height: 3px;
   background: var(--slate-200);
   z-index: 1;
+}
+
+.status-timeline.all-completed::before {
+  background: var(--primary);
 }
 
 .timeline-step {
